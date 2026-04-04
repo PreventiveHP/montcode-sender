@@ -28,18 +28,27 @@
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
             status.innerText = "TRANSMITTING...";
+            status.className = "mt-10 text-yellow-500 font-bold text-[10px] uppercase tracking-widest animate-pulse";
+
             try {
+                // EL FETCH APUNTA AL RELAY QUE DISPARA 'test-event'
                 const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: contenido }) // Campo 'message' como pide tu Relay
+                    // IMPORTANTE: Enviamos 'message' porque es lo que lee tu archivo de Node.js
+                    body: JSON.stringify({ message: contenido }) 
                 });
+
                 if (response.ok) {
                     status.innerText = "SENT SUCCESS ✅";
-                    status.className = "text-[#ccff00] font-bold text-[10px] uppercase tracking-widest";
+                    status.className = "mt-10 text-[#ccff00] font-bold text-[10px] uppercase tracking-widest";
+                } else {
+                    status.innerText = "RELAY ERROR ⚠️";
+                    status.className = "mt-10 text-red-500 font-bold text-[10px] uppercase tracking-widest";
                 }
             } catch (error) {
-                status.innerText = "FAILED ❌";
+                status.innerText = "NETWORK FAILED ❌";
+                status.className = "mt-10 text-red-700 font-bold text-[10px] uppercase tracking-widest";
             }
         }
 

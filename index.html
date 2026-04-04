@@ -9,7 +9,7 @@
 <body class="bg-black text-white flex flex-col items-center justify-center min-h-screen p-6 font-sans">
     <div class="text-center mb-10">
         <h1 class="text-[#ccff00] text-3xl font-black italic tracking-tighter uppercase leading-none">SENDER TACTICAL</h1>
-        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Direct Link Mode</p>
+        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Direct Link Mode (No Encryption)</p>
     </div>
 
     <button id="send-btn" onclick="enviarDato('ALERTA: Emergencia Detectada')" 
@@ -37,6 +37,7 @@
             status.className = "text-yellow-500 font-bold text-[10px] animate-pulse uppercase tracking-widest";
 
             try {
+                // USAMOS EL CAMPO 'text' QUE ES EL COMPATIBLE CON TU RELAY
                 const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

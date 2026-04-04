@@ -36,26 +36,35 @@
 
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
+            
+            // 1. CIFRAR EL CONTENIDO
             const encrypted = CryptoJS.AES.encrypt(contenido, SECRET_PHRASE).toString();
 
             status.innerText = "ENCRYPTING & SENDING...";
             status.className = "text-yellow-500 font-bold text-[10px] animate-pulse uppercase tracking-widest";
 
             try {
+                // 2. ENVIAR AL RELAY CON DOBLE CAMPO DE SEGURIDAD
                 const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        message: encrypted, // Enviamos el paquete cifrado
+                        message: encrypted, // Para el nuevo estándar
+                        text: encrypted,    // Para compatibilidad con el Relay actual
                         channel_id: "TEST-ID" 
                     })
                 });
+
                 if (response.ok) {
                     status.innerText = "ENCRYPTED DATA SENT ✅";
                     status.className = "text-[#ccff00] font-bold text-[10px] uppercase tracking-widest";
+                } else {
+                    status.innerText = "RELAY ERROR ⚠️";
+                    status.className = "text-orange-500 font-bold text-[10px] uppercase tracking-widest";
                 }
             } catch (error) {
                 status.innerText = "FAILED ❌";
+                status.className = "text-red-500 font-bold text-[10px] uppercase tracking-widest";
             }
         }
 

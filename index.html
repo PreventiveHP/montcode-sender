@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black text-white flex flex-col items-center justify-center min-h-screen p-6 font-sans">
-
     <div class="text-center mb-10">
         <h1 class="text-[#ccff00] text-3xl font-black italic tracking-tighter uppercase leading-none">SENDER SECURE</h1>
         <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">AES-256 Military Encryption</p>
@@ -22,7 +21,7 @@
 
     <div class="w-full max-w-xs space-y-3">
         <input type="text" id="chat-input" placeholder="Escribe nota médica segura..." 
-            class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#ccff00] transition-all">
+            class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#ccff00] transition-all placeholder:text-zinc-700">
         <button onclick="enviarDesdeChat()" class="w-full bg-zinc-800 text-[#ccff00] font-bold py-3 rounded-xl uppercase text-[11px] tracking-widest border border-zinc-700">
             Enviar Mensaje Cifrado
         </button>
@@ -33,12 +32,10 @@
     </div>
 
     <script>
-        const SECRET_PHRASE = "MONTCODE-MED-2026"; // La llave maestra
+        const SECRET_PHRASE = "MONTCODE-MED-2026";
 
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
-            
-            // CIFRADO ANTES DE ENVIAR
             const encrypted = CryptoJS.AES.encrypt(contenido, SECRET_PHRASE).toString();
 
             status.innerText = "ENCRYPTING & SENDING...";
@@ -48,7 +45,10 @@
                 const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: encrypted, channel_id: "TEST-ID" })
+                    body: JSON.stringify({ 
+                        message: encrypted, // Enviamos el paquete cifrado
+                        channel_id: "TEST-ID" 
+                    })
                 });
                 if (response.ok) {
                     status.innerText = "ENCRYPTED DATA SENT ✅";

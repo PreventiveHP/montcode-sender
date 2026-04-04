@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SENDER TEST</title>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+</head>
+<body>
+    <h1>SENDER (EMISOR)</h1>
+    <button onclick="enviarPrueba()" style="padding: 20px; background: #ccff00;">
+        ENVIAR "HOLA MUNDO"
+    </button>
+
+    <script>
+        // Configuración de Pusher
+        const pusher = new Pusher('284fc98940a4b6d4c359', { cluster: 'us2' });
+
+        function enviarPrueba() {
+            // NOTA: Para enviar desde el navegador, el canal DEBE empezar por "private-"
+            // y debes tener "Client Events" activado en el Dashboard de Pusher.
+            console.log("Intentando enviar...");
+            alert("Si no tienes un servidor, usa el DEBUG CONSOLE de Pusher para enviar el evento 'test-event' al canal 'test-channel'");
+        }
+    </script>
+</body>
+</html>

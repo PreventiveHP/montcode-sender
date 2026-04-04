@@ -6,45 +6,40 @@
     <title>SENDER - MontCode™</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white flex flex-col items-center justify-center min-h-screen p-6">
-    <div class="text-center mb-10">
-        <h1 class="text-[#ccff00] text-3xl font-black italic uppercase tracking-tighter">SENDER TACTICAL</h1>
-        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Direct Tube Mode</p>
-    </div>
+<body class="bg-black text-white flex flex-col items-center justify-center min-h-screen p-6 font-sans">
+    <h1 class="text-[#ccff00] text-3xl font-black italic mb-10 uppercase tracking-tighter">Sender Tactical</h1>
 
-    <button onclick="enviarDato('ALERTA: Emergencia detectada. Requiere atención inmediata.')" 
-        class="w-48 h-48 bg-[#ccff00] text-black font-black rounded-full border-[10px] border-[#ccff00]/20 shadow-[0_0_50px_rgba(204,255,0,0.2)] active:scale-95 mb-10 uppercase italic">
+    <button onclick="enviarDato('ALERTA: Pulso de emergencia activado.')" 
+        class="w-48 h-48 bg-[#ccff00] text-black font-black rounded-full border-[10px] border-[#ccff00]/20 shadow-[0_0_50px_rgba(204,255,0,0.3)] active:scale-95 mb-10 uppercase italic">
         PULSE
     </button>
 
     <div class="w-full max-w-xs space-y-3">
-        <textarea id="chat-input" placeholder="Escribe nota larga..." 
+        <textarea id="chat-input" placeholder="Escribe reporte largo..." 
             class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-white text-sm focus:border-[#ccff00] outline-none h-24 resize-none"></textarea>
         <button onclick="enviarDesdeChat()" class="w-full bg-zinc-800 text-[#ccff00] font-bold py-3 rounded-xl uppercase text-[11px] tracking-widest border border-zinc-700">
-            Enviar Reporte Largo
+            Transmitir Datos
         </button>
     </div>
 
-    <div id="status-box" class="mt-10 text-center">
-        <p id="status-text" class="text-zinc-600 font-bold text-[10px] uppercase tracking-widest">READY</p>
-    </div>
+    <p id="status-text" class="mt-10 text-zinc-600 font-bold text-[10px] uppercase tracking-widest">Ready</p>
 
     <script>
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
-            status.innerText = "SENDING...";
+            status.innerText = "TRANSMITTING...";
             try {
                 const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: contenido, channel_id: "TEST-ID" })
+                    body: JSON.stringify({ message: contenido }) // Campo 'message' como pide tu Relay
                 });
                 if (response.ok) {
                     status.innerText = "SENT SUCCESS ✅";
                     status.className = "text-[#ccff00] font-bold text-[10px] uppercase tracking-widest";
                 }
             } catch (error) {
-                status.innerText = "ERROR ❌";
+                status.innerText = "FAILED ❌";
             }
         }
 

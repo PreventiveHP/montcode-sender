@@ -31,7 +31,7 @@
             </div>
 
             <div id="feedback-active" class="hidden">
-                <span class="text-[9px] text-[#00ffff] uppercase font-black block mb-2 tracking-widest underline decoration-2 offset-4">Incoming Message:</span>
+                <span id="feedback-label" class="text-[9px] text-[#00ffff] uppercase font-black block mb-2 tracking-widest underline decoration-2 offset-4">Incoming Message:</span>
                 <p id="feedback-content" class="text-lg text-white font-black italic leading-tight uppercase"></p>
                 <button onclick="dismissFeedback()" class="mt-4 text-[9px] text-zinc-500 font-bold uppercase tracking-widest hover:text-white transition-colors">× Clear Terminal</button>
             </div>
@@ -85,26 +85,31 @@
             document.getElementById('conn-indicator').className = "w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]";
         });
 
-        // --- RECEPTOR DE INSTRUCCIONES (DEL DR AL PACIENTE) ---
+        // --- RECEPTOR MEJORADO (NO SE ROMPE) ---
         channel.bind('test-event', function(data) {
+            // Captura el mensaje sin importar si viene como .text o .message
             const content = data.text || data.message || "";
             
-            // Si el contenido trae el prefijo de Feedback del Dr.
+            if (!content) return; // Si está vacío no hace nada
+
             if (content.includes("CMD:FEEDBACK")) {
+                // Lógica de Comando Especial del Dr
                 const parts = content.split('|MSG:');
-                if (parts.length > 1) {
-                    showFeedback(parts[1]);
-                }
+                showFeedback(parts[1] || "New Instruction", "Doctor Instruction:");
+            } else if (!content.includes("CMD:BP") && !content.includes("CMD:GLU")) {
+                // Lógica "Hola Mundo" / Mensajes Planos (Losartan, etc)
+                // Evitamos mostrar en el terminal los propios envíos de vitales del paciente
+                showFeedback(content, "Incoming Update:");
             }
         });
 
-        function showFeedback(msg) {
+        function showFeedback(msg, label) {
             document.getElementById('feedback-placeholder').classList.add('hidden');
             document.getElementById('feedback-active').classList.remove('hidden');
             document.getElementById('feedback-panel').classList.add('alert-pulse', 'border-[#00ffff]');
+            document.getElementById('feedback-label').innerText = label;
             document.getElementById('feedback-content').innerText = msg;
             
-            // Vibración táctica: [largo, corto, largo]
             if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         }
 
@@ -114,14 +119,13 @@
             document.getElementById('feedback-panel').classList.remove('alert-pulse', 'border-[#00ffff]');
         }
 
-        // --- TRANSMISOR DE DATOS (PACIENTE AL DR) ---
+        // --- TRANSMISOR DE DATOS (Mantiene BP y GLU intactos) ---
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
             status.innerText = "TRANSMITTING...";
             status.className = "text-yellow-500 font-bold text-[9px] animate-pulse uppercase tracking-widest";
             
             try {
-                // Tu relay API que conecta con Pusher
                 const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

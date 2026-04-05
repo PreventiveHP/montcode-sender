@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,79 +7,84 @@
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        .glow-cyan { box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); }
         .alert-pulse { animation: pulse-border 2s infinite; }
         @keyframes pulse-border {
             0% { border-color: #222; }
-            50% { border-color: #00ffff; box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); }
+            50% { border-color: #00ffff; }
             100% { border-color: #222; }
         }
     </style>
 </head>
-<body class="bg-black text-white flex flex-col items-center justify-center min-h-screen p-6 font-sans">
+<body class="bg-black text-white flex flex-col items-center min-h-screen p-6 font-sans">
 
-    <div id="feedback-panel" class="hidden w-full max-w-xs bg-[#00ffff]/10 border-2 border-[#00ffff]/30 p-5 rounded-2xl mb-8 alert-pulse">
-        <div class="flex justify-between items-center mb-2">
-            <span class="text-[10px] text-[#00ffff] uppercase tracking-[0.2em] font-black italic">Provider Instruction</span>
-            <button onclick="dismissFeedback()" class="text-[9px] text-zinc-500 font-bold uppercase hover:text-white">Close</button>
-        </div>
-        <p id="feedback-content" class="text-sm text-white font-bold leading-tight">
-            </p>
-    </div>
-
-    <div class="text-center mb-8">
+    <div class="text-center mb-6 w-full max-w-xs">
         <div class="flex items-center justify-center gap-2 mb-1">
-            <h1 class="text-[#ccff00] text-3xl font-black italic tracking-tighter uppercase leading-none">SENDER TEST</h1>
+            <h1 class="text-[#ccff00] text-2xl font-black italic tracking-tighter uppercase">SENDER TEST</h1>
             <div id="conn-indicator" class="w-2 h-2 rounded-full bg-red-600 shadow-[0_0_8px_red]"></div>
         </div>
-        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em]">Bridge Transmitter v2.2 [BIDIRECTIONAL]</p>
+        <p class="text-zinc-500 text-[9px] font-bold uppercase tracking-[0.3em]">Bridge Transmitter v2.3</p>
     </div>
 
-    <div class="w-full max-w-xs bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-4 shadow-xl">
-        <span class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center italic">Vital Signs: Blood Pressure</span>
-        <div class="flex gap-2 mb-3">
-            <input type="number" id="bp-sys" placeholder="SYS" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
-            <input type="number" id="bp-dia" placeholder="DIA" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
+    <div class="w-full max-w-xs space-y-4 mb-8">
+        <div class="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl shadow-xl">
+            <span class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center italic">Vital Signs: Blood Pressure</span>
+            <div class="flex gap-2 mb-3">
+                <input type="number" id="bp-sys" placeholder="SYS" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00]">
+                <input type="number" id="bp-dia" placeholder="DIA" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00]">
+            </div>
+            <button onclick="prepararEnvioBP()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[10px] tracking-widest hover:bg-white transition-all">Log Pressure</button>
         </div>
-        <button onclick="prepararEnvioBP()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-white transition-all">Log Pressure Data</button>
-    </div>
 
-    <div class="w-full max-w-xs bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-6 shadow-xl">
-        <span class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center italic">Vital Signs: Glucose</span>
-        <div class="flex gap-2 mb-3">
-            <input type="number" id="glu-val" placeholder="mg/dL" class="w-full bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
+        <div class="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl shadow-xl">
+            <span class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center italic">Vital Signs: Glucose</span>
+            <input type="number" id="glu-val" placeholder="mg/dL" class="w-full bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] mb-3">
+            <button onclick="prepararEnvioGLU()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[10px] tracking-widest hover:bg-white transition-all">Log Glucose</button>
         </div>
-        <button onclick="prepararEnvioGLU()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-white transition-all">Log Glucose Data</button>
+
+        <div class="flex flex-col items-center gap-4 py-2">
+            <button id="send-btn" onclick="enviarDato('PULSE ALERT')" 
+                class="w-32 h-32 bg-[#ccff00] text-black font-black rounded-full border-[8px] border-[#ccff00]/20 shadow-[0_0_30px_rgba(204,255,0,0.1)] active:scale-95 transition-all flex items-center justify-center">
+                <span class="text-xl italic font-black uppercase">PULSE</span>
+            </button>
+            
+            <div class="w-full">
+                <input type="text" id="chat-input" placeholder="Send quick note to Dr..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#ccff00] placeholder:text-zinc-700 mb-2">
+                <button onclick="enviarDesdeChat()" class="w-full bg-zinc-800 text-[#ccff00] font-bold py-3 rounded-xl uppercase text-[10px] tracking-widest border border-zinc-700">Send Note</button>
+            </div>
+        </div>
     </div>
 
-    <button id="send-btn" onclick="enviarDato('PULSE ALERT')" 
-        class="w-40 h-40 bg-[#ccff00] text-black font-black rounded-full border-[10px] border-[#ccff00]/20 shadow-[0_0_50px_rgba(204,255,0,0.1)] active:scale-95 transition-all flex flex-col items-center justify-center focus:outline-none mb-8">
-        <span class="text-2xl italic uppercase">PULSE</span>
-    </button>
+    <div class="w-full max-w-xs pt-6 border-t border-zinc-800">
+        <label class="text-[9px] text-zinc-500 uppercase tracking-widest block mb-3 font-bold italic">Instruction Receiver Terminal</label>
+        
+        <div id="feedback-panel" class="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl glow-cyan transition-all min-h-[100px] flex flex-col justify-center">
+            <div id="feedback-placeholder" class="text-zinc-700 text-[10px] uppercase text-center font-bold tracking-tighter">
+                Waiting for Provider instructions...
+            </div>
+            <div id="feedback-active" class="hidden">
+                <span class="text-[9px] text-[#00ffff] uppercase font-black block mb-1">Incoming:</span>
+                <p id="feedback-content" class="text-sm text-white font-bold italic leading-tight"></p>
+                <button onclick="dismissFeedback()" class="mt-4 text-[9px] text-zinc-500 font-bold uppercase underline">Clear Terminal</button>
+            </div>
+        </div>
 
-    <div class="w-full max-w-xs space-y-3">
-        <input type="text" id="chat-input" placeholder="Type medical note..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#ccff00] transition-all placeholder:text-zinc-700">
-        <button onclick="enviarDesdeChat()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-[#ccff00] font-bold py-3 rounded-xl transition-all uppercase text-[11px] tracking-widest border border-zinc-700">Transmit Chat</button>
-    </div>
-
-    <div id="status-box" class="mt-8 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 w-full max-w-xs text-center">
-        <p id="status-text" class="text-zinc-600 font-bold text-[10px] uppercase tracking-widest italic">System Ready</p>
+        <div id="status-box" class="mt-6 p-3 rounded-xl bg-black border border-zinc-900 text-center">
+            <p id="status-text" class="text-zinc-700 font-bold text-[9px] uppercase tracking-widest italic">Link Status: Operational</p>
+        </div>
     </div>
 
     <script>
-        // Configuración de Pusher
         const pusher = new Pusher('284fc98940a4b6d4c359', { cluster: 'us2' });
         const channel = pusher.subscribe("test-channel");
 
-        // Indicador de conexión
         pusher.connection.bind('connected', () => {
-            const indicator = document.getElementById('conn-indicator');
-            indicator.className = "w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]";
+            document.getElementById('conn-indicator').className = "w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]";
         });
 
-        // ESCUCHAR FEEDBACK DEL MONITOR
+        // LÓGICA DE RECEPCIÓN
         channel.bind('test-event', function(data) {
             const content = data.text || "";
-            // Si el mensaje viene con el prefijo CMD:FEEDBACK
             if (content.includes("CMD:FEEDBACK")) {
                 const parts = content.split('|MSG:');
                 if (parts.length > 1) {
@@ -89,24 +94,25 @@
         });
 
         function showFeedback(msg) {
-            const panel = document.getElementById('feedback-panel');
-            const content = document.getElementById('feedback-content');
-            content.innerText = msg;
-            panel.classList.remove('hidden');
-            
-            // Vibración (si es móvil)
+            document.getElementById('feedback-placeholder').classList.add('hidden');
+            document.getElementById('feedback-active').classList.remove('hidden');
+            document.getElementById('feedback-panel').classList.add('alert-pulse', 'border-[#00ffff]');
+            document.getElementById('feedback-content').innerText = msg;
             if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         }
 
         function dismissFeedback() {
-            document.getElementById('feedback-panel').classList.add('hidden');
+            document.getElementById('feedback-placeholder').classList.remove('hidden');
+            document.getElementById('feedback-active').classList.add('hidden');
+            document.getElementById('feedback-panel').classList.remove('alert-pulse', 'border-[#00ffff]');
+            document.getElementById('feedback-content').innerText = "";
         }
 
+        // LÓGICA DE ENVÍO (Sigue igual para no romper nada)
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
             status.innerText = "TRANSMITTING...";
-            status.className = "text-yellow-500 font-bold text-[10px] animate-pulse uppercase tracking-widest";
-
+            status.className = "text-yellow-500 font-bold text-[9px] animate-pulse uppercase tracking-widest";
             try {
                 const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
@@ -114,30 +120,24 @@
                     body: JSON.stringify({ message: contenido, channel_id: "TEST-ID" })
                 });
                 if (response.ok) {
-                    status.innerText = "SUCCESS ✅";
-                    status.className = "text-[#ccff00] font-bold text-[10px] uppercase tracking-widest";
+                    status.innerText = "LINK SUCCESS ✅";
+                    status.className = "text-[#ccff00] font-bold text-[9px] uppercase tracking-widest";
                 }
             } catch (e) {
-                status.innerText = "FAILED ❌";
-                status.className = "text-red-500 font-bold text-[10px] uppercase tracking-widest";
+                status.innerText = "LINK FAILED ❌";
+                status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest";
             }
         }
 
         function prepararEnvioBP() {
             const s = document.getElementById('bp-sys').value;
             const d = document.getElementById('bp-dia').value;
-            if (s && d) {
-                enviarDato(`CMD:BP|SYS:${s}|DIA:${d}`);
-                document.getElementById('bp-sys').value = ""; document.getElementById('bp-dia').value = "";
-            }
+            if (s && d) { enviarDato(`CMD:BP|SYS:${s}|DIA:${d}`); document.getElementById('bp-sys').value = ""; document.getElementById('bp-dia').value = ""; }
         }
 
         function prepararEnvioGLU() {
             const g = document.getElementById('glu-val').value;
-            if (g) {
-                enviarDato(`CMD:GLU|VAL:${g}`);
-                document.getElementById('glu-val').value = "";
-            }
+            if (g) { enviarDato(`CMD:GLU|VAL:${g}`); document.getElementById('glu-val').value = ""; }
         }
 
         function enviarDesdeChat() {

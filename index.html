@@ -85,10 +85,9 @@
             document.getElementById('conn-indicator').className = "w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]";
         });
 
-        // --- ESCUCHA DE INSTRUCCIONES DEL DR ---
+        // REIBIR INSTRUCCIONES
         channel.bind('test-event', function(data) {
-            // El Dr envía con el formato CMD:FEEDBACK|MSG:Texto
-            const content = data.text || data.message || "";
+            const content = data.text || "";
             if (content.includes("CMD:FEEDBACK")) {
                 const parts = content.split('|MSG:');
                 if (parts.length > 1) {
@@ -111,7 +110,7 @@
             document.getElementById('feedback-panel').classList.remove('alert-pulse', 'border-[#00ffff]');
         }
 
-        // --- ENVÍO DE DATOS (TU LÓGICA ORIGINAL) ---
+        // ENVIAR DATOS (SIN TOCAR LÓGICA)
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
             status.innerText = "TRANSMITTING...";
@@ -120,7 +119,7 @@
                 const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: contenido, channel_id: "test-channel" })
+                    body: JSON.stringify({ message: contenido, channel_id: "TEST-ID" })
                 });
                 if (response.ok) {
                     status.innerText = "SUCCESS ✅";
@@ -130,43 +129,23 @@
                 status.innerText = "FAILED ❌";
                 status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest";
             }
-            setTimeout(() => {
-                if(status.innerText !== "FAILED ❌") {
-                   status.innerText = "Link: Standby";
-                   status.className = "text-zinc-700 font-bold text-[9px] uppercase tracking-widest italic";
-                }
-            }, 3000);
         }
 
         function prepararEnvioBP() {
             const s = document.getElementById('bp-sys').value;
             const d = document.getElementById('bp-dia').value;
-            if (s && d) { 
-                enviarDato(`CMD:BP|SYS:${s}|DIA:${d}`); 
-                document.getElementById('bp-sys').value = ""; 
-                document.getElementById('bp-dia').value = ""; 
-            }
+            if (s && d) { enviarDato(`CMD:BP|SYS:${s}|DIA:${d}`); document.getElementById('bp-sys').value = ""; document.getElementById('bp-dia').value = ""; }
         }
 
         function prepararEnvioGLU() {
             const g = document.getElementById('glu-val').value;
-            if (g) { 
-                enviarDato(`CMD:GLU|VAL:${g}`); 
-                document.getElementById('glu-val').value = ""; 
-            }
+            if (g) { enviarDato(`CMD:GLU|VAL:${g}`); document.getElementById('glu-val').value = ""; }
         }
 
         function enviarDesdeChat() {
             const i = document.getElementById('chat-input');
-            if (i.value.trim()) { 
-                enviarDato(i.value); 
-                i.value = ""; 
-            }
+            if (i.value.trim()) { enviarDato(i.value); i.value = ""; }
         }
     </script>
 </body>
 </html>
-
-
-
-

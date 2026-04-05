@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black p-4">
+    <div id="msg-panel" class="bg-zinc-900 border-2 border-zinc-800 p-6 rounded-3xl min-h-[100px] flex flex-col justify-center">
+        <p id="msg-display" class="text-[#00ffff] text-lg font-black italic uppercase text-center">Waiting for Provider...</p>
+        <button onclick="document.getElementById('msg-display').innerText='Ready';" class="mt-4 text-[9px] text-zinc-600 uppercase font-bold">Clear</button>
+    </div>
+
+    <script>
+        const pusher = new Pusher('284fc98940a4b6d4c359', { cluster: 'us2' });
+        const channel = pusher.subscribe("test-channel");
+
+        channel.bind('test-event', function(data) {
+            // Lógica ultra-simple: si llega algo que no es comando de BP/GLU, es mensaje
+            const raw = data.text || data.message || "";
+            if (!raw.includes("CMD:BP") && !raw.includes("CMD:GLU")) {
+                document.getElementById('msg-display').innerText = raw;
+                if (navigator.vibrate) navigator.vibrate(200);
+            }
+        });
+    </script>
+</body>
+</html>

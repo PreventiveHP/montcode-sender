@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PATIENT TERMINAL - MontCode™</title>
+    <title>SENDER TEST - MontCode™</title>
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glow-cyan { box-shadow: 0 0 25px rgba(0, 255, 255, 0.2); }
-        .med-alert { background: linear-gradient(145deg, #1a1a1a, #002222); border: 2px solid #00ffff !important; }
-        .pill-bounce { animation: bounce 2s infinite; font-size: 50px; }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+        .glow-cyan { box-shadow: 0 0 20px rgba(0, 255, 255, 0.15); }
+        .alert-pulse { animation: pulse-border 2s infinite; }
+        @keyframes pulse-border {
+            0% { border-color: #333; }
+            50% { border-color: #00ffff; }
+            100% { border-color: #333; }
         }
     </style>
 </head>
@@ -20,59 +20,60 @@
 
     <div class="w-full max-w-xs mb-8">
         <label class="text-[10px] text-[#00ffff] uppercase tracking-[0.2em] block mb-3 font-black italic text-center">
-            Secured Instruction Node
+            Instruction Receiver Terminal
         </label>
         
-        <div id="feedback-panel" class="w-full bg-zinc-900 border-2 border-zinc-800 p-6 rounded-[2.5rem] glow-cyan transition-all min-h-[160px] flex flex-col justify-center items-center relative overflow-hidden text-center">
+        <div id="feedback-panel" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-3xl glow-cyan transition-all min-h-[120px] flex flex-col justify-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-zinc-800"></div>
             
-            <div id="feedback-placeholder" class="text-zinc-700 text-[10px] uppercase font-bold tracking-widest">
-                <div class="mb-2 opacity-20">📡</div>
-                Waiting for Dr. Commands
+            <div id="feedback-placeholder" class="text-zinc-600 text-[10px] uppercase text-center font-bold tracking-widest leading-tight">
+                No active instructions<br><span class="opacity-50 text-[8px]">Waiting for Provider...</span>
             </div>
 
-            <div id="feedback-active" class="hidden w-full">
-                <div id="pill-zone" class="hidden mb-2 pill-bounce">💊</div>
-                <span id="feedback-label" class="text-[9px] text-[#00ffff] uppercase font-black block mb-1 tracking-widest italic underline decoration-[#ccff00]">Message from Dr:</span>
-                <p id="feedback-content" class="text-xl text-white font-black leading-tight uppercase italic"></p>
-                
-                <button onclick="dismissFeedback()" class="mt-6 bg-white/5 px-4 py-2 rounded-full text-[8px] text-zinc-500 font-bold uppercase tracking-widest hover:text-white transition-colors border border-white/10">
-                    Confirm & Clear
-                </button>
+            <div id="feedback-active" class="hidden">
+                <span class="text-[9px] text-[#00ffff] uppercase font-black block mb-2 tracking-widest underline decoration-2 offset-4">Incoming Message:</span>
+                <p id="feedback-content" class="text-lg text-white font-black italic leading-tight uppercase"></p>
+                <button onclick="dismissFeedback()" class="mt-4 text-[9px] text-zinc-500 font-bold uppercase tracking-widest hover:text-white transition-colors">× Clear Terminal</button>
             </div>
         </div>
     </div>
 
-    <div class="w-full max-w-xs border-t border-zinc-800/50 mb-8"></div>
+    <div class="w-full max-w-xs border-t border-zinc-800 mb-8 opacity-30"></div>
 
     <div class="text-center mb-6">
         <div class="flex items-center justify-center gap-2 mb-1">
-            <h1 class="text-[#ccff00] text-xl font-black italic tracking-tighter uppercase leading-none">Vital Logger</h1>
+            <h1 class="text-[#ccff00] text-xl font-black italic tracking-tighter uppercase">Patient Transmitter</h1>
             <div id="conn-indicator" class="w-2 h-2 rounded-full bg-red-600 shadow-[0_0_8px_red]"></div>
         </div>
-        <p class="text-zinc-600 text-[8px] font-bold uppercase tracking-[0.3em]">Patient-to-Provider Link</p>
+        <p class="text-zinc-600 text-[8px] font-bold uppercase tracking-[0.4em]">Secure Link v2.4</p>
     </div>
 
     <div class="w-full max-w-xs space-y-4">
-        <div class="bg-zinc-900/40 border border-zinc-800 p-4 rounded-3xl">
-            <div class="flex gap-2 mb-2">
-                <input type="number" id="bp-sys" placeholder="SYS" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#00ffff] font-black outline-none focus:border-[#00ffff]">
-                <input type="number" id="bp-dia" placeholder="DIA" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#00ffff] font-black outline-none focus:border-[#00ffff]">
-            </div>
-            <button onclick="prepararEnvioBP()" class="w-full bg-zinc-800 text-white font-black py-3 rounded-xl uppercase text-[9px] tracking-widest mb-4 hover:bg-zinc-700">Push BP Record</button>
-            
-            <input type="number" id="glu-val" placeholder="GLUCOSE mg/dL" class="w-full bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-black outline-none focus:border-[#ccff00] mb-2">
-            <button onclick="prepararEnvioGLU()" class="w-full bg-zinc-800 text-white font-black py-3 rounded-xl uppercase text-[9px] tracking-widest hover:bg-zinc-700">Push Glucose Record</button>
-        </div>
-
-        <div class="pt-2">
-            <input type="text" id="chat-input" placeholder="Type a note for your Dr..." class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-[#ccff00] placeholder:text-zinc-700 mb-2 font-bold">
-            <button onclick="enviarDesdeChat()" class="w-full bg-[#ccff00] text-black font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest shadow-lg shadow-[#ccff00]/10 active:scale-95 transition-all">
-                Send Note to Station
+        <div class="flex justify-center py-2">
+            <button id="send-btn" onclick="enviarDato('PULSE ALERT')" 
+                class="w-28 h-28 bg-[#ccff00] text-black font-black rounded-full border-[6px] border-[#ccff00]/20 shadow-[0_0_30px_rgba(204,255,0,0.1)] active:scale-90 transition-all flex items-center justify-center">
+                <span class="text-lg font-black italic">PULSE</span>
             </button>
         </div>
 
+        <div class="bg-zinc-900/40 border border-zinc-800 p-4 rounded-2xl">
+            <div class="flex gap-2 mb-2">
+                <input type="number" id="bp-sys" placeholder="SYS" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00]">
+                <input type="number" id="bp-dia" placeholder="DIA" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00]">
+            </div>
+            <button onclick="prepararEnvioBP()" class="w-full bg-[#ccff00] text-black font-black py-2.5 rounded-xl uppercase text-[9px] tracking-widest mb-4">Log Pressure</button>
+            
+            <input type="number" id="glu-val" placeholder="GLUCOSE mg/dL" class="w-full bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] mb-2">
+            <button onclick="prepararEnvioGLU()" class="w-full bg-[#ccff00] text-black font-black py-2.5 rounded-xl uppercase text-[9px] tracking-widest">Log Glucose</button>
+        </div>
+
+        <div class="pt-2">
+            <input type="text" id="chat-input" placeholder="Type note for Dr..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#ccff00] placeholder:text-zinc-700 mb-2">
+            <button onclick="enviarDesdeChat()" class="w-full bg-zinc-800 text-[#ccff00] font-black py-3 rounded-xl uppercase text-[10px] tracking-widest border border-zinc-700">Transmit Note</button>
+        </div>
+
         <div id="status-box" class="text-center py-4">
-            <p id="status-text" class="text-zinc-800 font-bold text-[8px] uppercase tracking-widest italic">Link: Idle</p>
+            <p id="status-text" class="text-zinc-700 font-bold text-[9px] uppercase tracking-widest italic">Link: Standby</p>
         </div>
     </div>
 
@@ -84,66 +85,49 @@
             document.getElementById('conn-indicator').className = "w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]";
         });
 
-        // --- RECEPTOR LÓGICO (ESCUCHA AL DR) ---
+        // REIBIR INSTRUCCIONES
         channel.bind('test-event', function(data) {
-            const content = data.text || data.message || "";
-            if (!content) return;
-
-            // FILTRO: Solo mostrar si viene del Dr (CMD:FEEDBACK)
+            const content = data.text || "";
             if (content.includes("CMD:FEEDBACK")) {
-                const msg = content.split('|MSG:')[1] || "Check instructions";
-                
-                // DETECCIÓN DE CÁPSULA (Basado en Losartan o mg)
-                const isMed = msg.toLowerCase().includes('losartan') || msg.toLowerCase().includes('mg');
-                
-                showFeedback(msg, isMed);
+                const parts = content.split('|MSG:');
+                if (parts.length > 1) {
+                    showFeedback(parts[1]);
+                }
             }
         });
 
-        function showFeedback(msg, isMed) {
+        function showFeedback(msg) {
             document.getElementById('feedback-placeholder').classList.add('hidden');
             document.getElementById('feedback-active').classList.remove('hidden');
-            
-            const panel = document.getElementById('feedback-panel');
-            const pill = document.getElementById('pill-zone');
-            
-            if (isMed) {
-                panel.classList.add('med-alert');
-                pill.classList.remove('hidden');
-            } else {
-                panel.classList.remove('med-alert');
-                pill.classList.add('hidden');
-            }
-
+            document.getElementById('feedback-panel').classList.add('alert-pulse', 'border-[#00ffff]');
             document.getElementById('feedback-content').innerText = msg;
-            if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         }
 
         function dismissFeedback() {
             document.getElementById('feedback-placeholder').classList.remove('hidden');
             document.getElementById('feedback-active').classList.add('hidden');
-            document.getElementById('feedback-panel').classList.remove('med-alert');
+            document.getElementById('feedback-panel').classList.remove('alert-pulse', 'border-[#00ffff]');
         }
 
-        // --- TRANSMISIÓN HACIA EL DR ---
+        // ENVIAR DATOS (SIN TOCAR LÓGICA)
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
-            status.innerText = "LINKING...";
-            
+            status.innerText = "TRANSMITTING...";
+            status.className = "text-yellow-500 font-bold text-[9px] animate-pulse uppercase tracking-widest";
             try {
-                // Usamos la misma API de relay que configuramos
-                await fetch('https://api.pusher.com/apps/1897282/events', {
+                const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: "test-event",
-                        channel: "test-channel",
-                        data: { text: contenido }
-                    })
+                    body: JSON.stringify({ message: contenido, channel_id: "TEST-ID" })
                 });
-                status.innerText = "SENT TO DR ✅";
+                if (response.ok) {
+                    status.innerText = "SUCCESS ✅";
+                    status.className = "text-[#ccff00] font-bold text-[9px] uppercase tracking-widest";
+                }
             } catch (e) {
-                status.innerText = "LINK ERROR ❌";
+                status.innerText = "FAILED ❌";
+                status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest";
             }
         }
 
@@ -165,3 +149,16 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+

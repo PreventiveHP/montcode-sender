@@ -1,0 +1,23 @@
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<div id="display" style="background:#000; color:#0ff; padding:20px; border-radius:20px; font-family:sans-serif; text-align:center;">
+    <div id="pill-icon" style="display:none; font-size:40px;">💊</div>
+    <h2 id="msg-text" style="text-transform:uppercase; font-weight:900;">Waiting for Provider...</h2>
+</div>
+
+<script>
+    const pusher = new Pusher('284fc98940a4b6d4c359', { cluster: 'us2' });
+    const channel = pusher.subscribe("test-channel");
+
+    channel.bind('test-event', function(data) {
+        // La clave de ese chat: El receptor buscaba "text" directamente
+        const incoming = data.text || data.message;
+        if(incoming) {
+            document.getElementById('msg-text').innerText = incoming;
+            // Lógica de la cápsula: si el texto tiene medicina, muestra el icono
+            if(incoming.toLowerCase().includes('losartan') || incoming.toLowerCase().includes('mg')) {
+                document.getElementById('pill-icon').style.display = 'block';
+            }
+            if(navigator.vibrate) navigator.vibrate([300, 100, 300]);
+        }
+    });
+</script>

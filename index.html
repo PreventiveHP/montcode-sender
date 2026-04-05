@@ -1,123 +1,245 @@
- <!DOCTYPE html>
+   <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>SENDER TEST - MontCode™</title>
+
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
+
 <body class="bg-black text-white flex flex-col items-center justify-center min-h-screen p-6 font-sans">
 
+
+
     <div class="text-center mb-10">
+
         <h1 class="text-[#ccff00] text-3xl font-black italic tracking-tighter uppercase leading-none">SENDER TEST</h1>
-        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Bridge Transmitter v2.1</p>
+
+        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Bridge Transmitter v2.0</p>
+
     </div>
 
-    <div class="w-full max-w-xs bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-4 shadow-xl">
-        <span class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center">Vital Signs: Blood Pressure</span>
-        <div class="flex gap-2 mb-3">
-            <input type="number" id="bp-sys" placeholder="SYS" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
-            <input type="number" id="bp-dia" placeholder="DIA" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
-        </div>
-        <button onclick="prepararEnvioBP()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-white transition-all">
-            Log Pressure Data
-        </button>
-    </div>
+
 
     <div class="w-full max-w-xs bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-6 shadow-xl">
-        <span class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center">Vital Signs: Glucose</span>
+
+        <label class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center">Vital Signs: Blood Pressure</p>
+
         <div class="flex gap-2 mb-3">
-            <input type="number" id="glu-val" placeholder="mg/dL" class="w-full bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
+
+            <input type="number" id="bp-sys" placeholder="SYS" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
+
+            <input type="number" id="bp-dia" placeholder="DIA" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
+
         </div>
-        <button onclick="prepararEnvioGLU()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-white transition-all">
-            Log Glucose Data
+
+        <button onclick="prepararEnvioBP()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-white transition-all">
+
+            Log Pressure Data
+
         </button>
+
     </div>
+
+
 
     <button id="send-btn" onclick="enviarDato('HOLA MUNDO DESDE EL TEST')" 
+
         class="w-48 h-48 bg-[#ccff00] text-black font-black rounded-full border-[10px] border-[#ccff00]/20 shadow-[0_0_50px_rgba(204,255,0,0.1)] active:scale-95 transition-all flex flex-col items-center justify-center focus:outline-none mb-10">
+
         <span class="text-2xl italic uppercase leading-none">PULSE</span>
+
         <span class="text-[9px] opacity-70 mt-1 uppercase tracking-[0.1em]">Fixed Alert</span>
+
     </button>
 
+
+
     <div class="w-full max-w-xs space-y-3">
+
         <div class="flex flex-col">
+
             <label class="text-[9px] text-zinc-600 uppercase tracking-widest ml-2 mb-1 font-bold">Live Terminal</label>
+
             <input type="text" id="chat-input" 
+
                 placeholder="Type medical note..." 
+
                 class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#ccff00] transition-all placeholder:text-zinc-700">
+
         </div>
 
+
+
         <button onclick="enviarDesdeChat()" 
+
             class="w-full bg-zinc-800 hover:bg-zinc-700 text-[#ccff00] font-bold py-3 rounded-xl transition-all uppercase text-[11px] tracking-widest border border-zinc-700">
+
             Transmit Chat
+
         </button>
+
     </div>
+
+
 
     <div id="status-box" class="mt-10 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 w-full max-w-xs text-center">
+
         <p id="status-text" class="text-zinc-600 font-bold text-[10px] uppercase tracking-widest">System Ready</p>
+
     </div>
 
+
+
     <script>
+
+        // --- NUEVA FUNCIÓN PARA BP ---
+
         function prepararEnvioBP() {
+
             const sys = document.getElementById('bp-sys').value;
+
             const dia = document.getElementById('bp-dia').value;
+
+            
+
             if (sys && dia) {
-                enviarDato(`CMD:BP|SYS:${sys}|DIA:${dia}`);
+
+                // Creamos la cadena de texto con un prefijo reconocible
+
+                const mensajeBP = `CMD:BP|SYS:${sys}|DIA:${dia}`;
+
+                enviarDato(mensajeBP); // Usamos tu función de siempre
+
+                
+
+                // Limpiamos
+
                 document.getElementById('bp-sys').value = "";
+
                 document.getElementById('bp-dia').value = "";
-            } else { alert("Enter SYS and DIA values"); }
+
+            } else {
+
+                alert("Enter SYS and DIA values");
+
+            }
+
         }
 
-        function prepararEnvioGLU() {
-            const glu = document.getElementById('glu-val').value;
-            if (glu) {
-                enviarDato(`CMD:GLU|VAL:${glu}`);
-                document.getElementById('glu-val').value = "";
-            } else { alert("Enter Glucose value"); }
-        }
+
+
+        // --- TU FUNCIÓN ORIGINAL (SIN TOCAR) ---
 
         async function enviarDato(contenido) {
+
             const status = document.getElementById('status-text');
+
             const btn = document.getElementById('send-btn');
+
+
+
             if (!contenido) return;
+
+
+
             status.innerText = "TRANSMITTING...";
+
             status.className = "text-yellow-500 font-bold text-[10px] animate-pulse uppercase tracking-widest";
+
             btn.style.opacity = "0.5";
 
+
+
             try {
+
                 const response = await fetch('/api/pusher-relay', {
+
                     method: 'POST',
+
                     headers: { 'Content-Type': 'application/json' },
+
                     body: JSON.stringify({ 
+
                         message: contenido,
+
                         channel_id: "TEST-ID" 
+
                     })
+
                 });
+
+
+
                 if (response.ok) {
+
                     status.innerText = "TRANSMISSION SUCCESS ✅";
+
                     status.className = "text-[#ccff00] font-bold text-[10px] uppercase tracking-widest";
-                } else { throw new Error("Relay Error"); }
+
+                } else {
+
+                    throw new Error("Relay Error");
+
+                }
+
             } catch (error) {
+
                 console.error("Error:", error);
+
                 status.innerText = "LINK FAILED ❌";
+
                 status.className = "text-red-500 font-bold text-[10px] uppercase tracking-widest";
-            } finally { btn.style.opacity = "1"; }
+
+            } finally {
+
+                btn.style.opacity = "1";
+
+            }
+
         }
+
+
 
         function enviarDesdeChat() {
+
             const input = document.getElementById('chat-input');
+
             const mensaje = input.value.trim();
+
             if (mensaje !== "") {
+
                 enviarDato(mensaje);
+
                 input.value = "";
-            } else { alert("Please enter a message"); }
+
+            } else {
+
+                alert("Please enter a message");
+
+            }
+
         }
 
+
+
         document.getElementById('chat-input').addEventListener('keypress', function (e) {
+
             if (e.key === 'Enter') { enviarDesdeChat(); }
+
         });
+
     </script>
+
 </body>
+
 </html>

@@ -14,6 +14,17 @@
         <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Bridge Transmitter v2.0</p>
     </div>
 
+    <div class="w-full max-w-xs bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-6 shadow-xl">
+        <label class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center">Vital Signs: Blood Pressure</p>
+        <div class="flex gap-2 mb-3">
+            <input type="number" id="bp-sys" placeholder="SYS" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
+            <input type="number" id="bp-dia" placeholder="DIA" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
+        </div>
+        <button onclick="prepararEnvioBP()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-white transition-all">
+            Log Pressure Data
+        </button>
+    </div>
+
     <button id="send-btn" onclick="enviarDato('HOLA MUNDO DESDE EL TEST')" 
         class="w-48 h-48 bg-[#ccff00] text-black font-black rounded-full border-[10px] border-[#ccff00]/20 shadow-[0_0_50px_rgba(204,255,0,0.1)] active:scale-95 transition-all flex flex-col items-center justify-center focus:outline-none mb-10">
         <span class="text-2xl italic uppercase leading-none">PULSE</span>
@@ -39,7 +50,25 @@
     </div>
 
     <script>
-        // Función principal de envío por el "Tubo Digital"
+        // --- NUEVA FUNCIÓN PARA BP ---
+        function prepararEnvioBP() {
+            const sys = document.getElementById('bp-sys').value;
+            const dia = document.getElementById('bp-dia').value;
+            
+            if (sys && dia) {
+                // Creamos la cadena de texto con un prefijo reconocible
+                const mensajeBP = `CMD:BP|SYS:${sys}|DIA:${dia}`;
+                enviarDato(mensajeBP); // Usamos tu función de siempre
+                
+                // Limpiamos
+                document.getElementById('bp-sys').value = "";
+                document.getElementById('bp-dia').value = "";
+            } else {
+                alert("Enter SYS and DIA values");
+            }
+        }
+
+        // --- TU FUNCIÓN ORIGINAL (SIN TOCAR) ---
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
             const btn = document.getElementById('send-btn');
@@ -75,24 +104,19 @@
             }
         }
 
-        // Función para capturar el texto del input
         function enviarDesdeChat() {
             const input = document.getElementById('chat-input');
             const mensaje = input.value.trim();
-            
             if (mensaje !== "") {
                 enviarDato(mensaje);
-                input.value = ""; // Limpiar tras enviar
+                input.value = "";
             } else {
                 alert("Please enter a message");
             }
         }
 
-        // Permitir enviar con la tecla Enter
         document.getElementById('chat-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                enviarDesdeChat();
-            }
+            if (e.key === 'Enter') { enviarDesdeChat(); }
         });
     </script>
 </body>

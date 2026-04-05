@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -77,7 +77,7 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN PUSHER
+        // CONFIGURACIÓN PUSHER (Unificada con el Dr)
         const pusher = new Pusher('284fc98940a4b6d4c359', { cluster: 'us2', forceTLS: true });
         const channel = pusher.subscribe("test-channel");
 
@@ -85,17 +85,22 @@
             document.getElementById('conn-indicator').className = "w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]";
         });
 
-        // --- CLON DE LÓGICA DE ESCUCHA (RECIBIR DEL DR) ---
+        // --- EL "OÍDO" DEL RECEPTOR (PACIENTE ESCUCHA AL DR) ---
         channel.bind('test-event', function(data) {
-            console.log("Stream Input:", data);
-            const content = data.text || data.message || "";
+            console.log("Inbound Stream:", data);
             
-            // Detectar si es feedback médico
+            // Aceptamos 'text', 'message' o 'data' para máxima compatibilidad
+            const content = data.text || data.message || data.data || "";
+            
+            // Detectar si el Dr envía un comando de Feedback
             if (content.includes("CMD:FEEDBACK")) {
                 const parts = content.split('|MSG:');
-                if (parts.length > 1) {
-                    showFeedback(parts[1]);
-                }
+                const cleanMsg = parts.length > 1 ? parts[1] : content.replace("CMD:FEEDBACK", "");
+                showFeedback(cleanMsg);
+            } 
+            // Si el mensaje es una nota libre del Dr sin comando, también la mostramos
+            else if (content.length > 0 && !content.startsWith("CMD:")) {
+                showFeedback(content);
             }
         });
 
@@ -132,8 +137,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        message: contenido, 
-                        channel_id: "TEST-ID" 
+                        text: contenido, // Usamos 'text' para coincidir con la lectura del Dr
+                        channel_id: "test-channel" 
                     })
                 });
                 

@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,17 +11,27 @@
 
     <div class="text-center mb-10">
         <h1 class="text-[#ccff00] text-3xl font-black italic tracking-tighter uppercase leading-none">SENDER TEST</h1>
-        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Bridge Transmitter v2.0</p>
+        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Bridge Transmitter v2.1</p>
     </div>
 
-    <div class="w-full max-w-xs bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-6 shadow-xl">
-        <label class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center">Vital Signs: Blood Pressure</p>
+    <div class="w-full max-w-xs bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-4 shadow-xl">
+        <label class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center">Vital Signs: Blood Pressure</label>
         <div class="flex gap-2 mb-3">
             <input type="number" id="bp-sys" placeholder="SYS" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
             <input type="number" id="bp-dia" placeholder="DIA" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
         </div>
         <button onclick="prepararEnvioBP()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-white transition-all">
             Log Pressure Data
+        </button>
+    </div>
+
+    <div class="w-full max-w-xs bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-6 shadow-xl">
+        <label class="text-[9px] text-[#ccff00] uppercase tracking-[0.2em] font-bold block mb-3 text-center">Vital Signs: Glucose</label>
+        <div class="flex gap-2 mb-3">
+            <input type="number" id="glu-val" placeholder="mg/dL" class="w-full bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] transition-all">
+        </div>
+        <button onclick="prepararEnvioGLU()" class="w-full bg-[#ccff00] text-black font-black py-3 rounded-xl uppercase text-[11px] tracking-widest hover:bg-white transition-all">
+            Log Glucose Data
         </button>
     </div>
 
@@ -50,31 +60,33 @@
     </div>
 
     <script>
-        // --- NUEVA FUNCIÓN PARA BP ---
+        // --- FUNCIÓN PARA BP ---
         function prepararEnvioBP() {
             const sys = document.getElementById('bp-sys').value;
             const dia = document.getElementById('bp-dia').value;
-            
             if (sys && dia) {
-                // Creamos la cadena de texto con un prefijo reconocible
                 const mensajeBP = `CMD:BP|SYS:${sys}|DIA:${dia}`;
-                enviarDato(mensajeBP); // Usamos tu función de siempre
-                
-                // Limpiamos
+                enviarDato(mensajeBP);
                 document.getElementById('bp-sys').value = "";
                 document.getElementById('bp-dia').value = "";
-            } else {
-                alert("Enter SYS and DIA values");
-            }
+            } else { alert("Enter SYS and DIA values"); }
         }
 
-        // --- TU FUNCIÓN ORIGINAL (SIN TOCAR) ---
+        // --- NUEVA FUNCIÓN PARA GLUCOSA ---
+        function prepararEnvioGLU() {
+            const glu = document.getElementById('glu-val').value;
+            if (glu) {
+                const mensajeGLU = `CMD:GLU|VAL:${glu}`;
+                enviarDato(mensajeGLU);
+                document.getElementById('glu-val').value = "";
+            } else { alert("Enter Glucose value"); }
+        }
+
+        // --- TU FUNCIÓN ORIGINAL ---
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
             const btn = document.getElementById('send-btn');
-
             if (!contenido) return;
-
             status.innerText = "TRANSMITTING...";
             status.className = "text-yellow-500 font-bold text-[10px] animate-pulse uppercase tracking-widest";
             btn.style.opacity = "0.5";
@@ -88,20 +100,15 @@
                         channel_id: "TEST-ID" 
                     })
                 });
-
                 if (response.ok) {
                     status.innerText = "TRANSMISSION SUCCESS ✅";
                     status.className = "text-[#ccff00] font-bold text-[10px] uppercase tracking-widest";
-                } else {
-                    throw new Error("Relay Error");
-                }
+                } else { throw new Error("Relay Error"); }
             } catch (error) {
                 console.error("Error:", error);
                 status.innerText = "LINK FAILED ❌";
                 status.className = "text-red-500 font-bold text-[10px] uppercase tracking-widest";
-            } finally {
-                btn.style.opacity = "1";
-            }
+            } finally { btn.style.opacity = "1"; }
         }
 
         function enviarDesdeChat() {
@@ -110,9 +117,7 @@
             if (mensaje !== "") {
                 enviarDato(mensaje);
                 input.value = "";
-            } else {
-                alert("Please enter a message");
-            }
+            } else { alert("Please enter a message"); }
         }
 
         document.getElementById('chat-input').addEventListener('keypress', function (e) {
@@ -120,4 +125,4 @@
         });
     </script>
 </body>
-</html>
+</html> 

@@ -85,9 +85,11 @@
             document.getElementById('conn-indicator').className = "w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]";
         });
 
-        // REIBIR INSTRUCCIONES
+        // --- RECEPTOR DE INSTRUCCIONES (DEL DR AL PACIENTE) ---
         channel.bind('test-event', function(data) {
-            const content = data.text || "";
+            const content = data.text || data.message || "";
+            
+            // Si el contenido trae el prefijo de Feedback del Dr.
             if (content.includes("CMD:FEEDBACK")) {
                 const parts = content.split('|MSG:');
                 if (parts.length > 1) {
@@ -101,6 +103,8 @@
             document.getElementById('feedback-active').classList.remove('hidden');
             document.getElementById('feedback-panel').classList.add('alert-pulse', 'border-[#00ffff]');
             document.getElementById('feedback-content').innerText = msg;
+            
+            // Vibración táctica: [largo, corto, largo]
             if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         }
 
@@ -110,17 +114,20 @@
             document.getElementById('feedback-panel').classList.remove('alert-pulse', 'border-[#00ffff]');
         }
 
-        // ENVIAR DATOS (SIN TOCAR LÓGICA)
+        // --- TRANSMISOR DE DATOS (PACIENTE AL DR) ---
         async function enviarDato(contenido) {
             const status = document.getElementById('status-text');
             status.innerText = "TRANSMITTING...";
             status.className = "text-yellow-500 font-bold text-[9px] animate-pulse uppercase tracking-widest";
+            
             try {
+                // Tu relay API que conecta con Pusher
                 const response = await fetch('/api/pusher-relay', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: contenido, channel_id: "TEST-ID" })
                 });
+
                 if (response.ok) {
                     status.innerText = "SUCCESS ✅";
                     status.className = "text-[#ccff00] font-bold text-[9px] uppercase tracking-widest";
@@ -134,17 +141,27 @@
         function prepararEnvioBP() {
             const s = document.getElementById('bp-sys').value;
             const d = document.getElementById('bp-dia').value;
-            if (s && d) { enviarDato(`CMD:BP|SYS:${s}|DIA:${d}`); document.getElementById('bp-sys').value = ""; document.getElementById('bp-dia').value = ""; }
+            if (s && d) { 
+                enviarDato(`CMD:BP|SYS:${s}|DIA:${d}`); 
+                document.getElementById('bp-sys').value = ""; 
+                document.getElementById('bp-dia').value = ""; 
+            }
         }
 
         function prepararEnvioGLU() {
             const g = document.getElementById('glu-val').value;
-            if (g) { enviarDato(`CMD:GLU|VAL:${g}`); document.getElementById('glu-val').value = ""; }
+            if (g) { 
+                enviarDato(`CMD:GLU|VAL:${g}`); 
+                document.getElementById('glu-val').value = ""; 
+            }
         }
 
         function enviarDesdeChat() {
             const i = document.getElementById('chat-input');
-            if (i.value.trim()) { enviarDato(i.value); i.value = ""; }
+            if (i.value.trim()) { 
+                enviarDato(i.value); 
+                i.value = ""; 
+            }
         }
     </script>
 </body>

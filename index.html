@@ -48,9 +48,22 @@
         .logo-main { filter: drop-shadow(0 0 20px rgba(218, 165, 32, 0.4)); border: 2px solid #DAA520; }
         .btn-text { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #ccff00; margin-top: 8px; }
         .locked { opacity: 0.2; filter: grayscale(1); pointer-events: none; }
+
+        /* Disclaimer Styling */
+        .disclaimer-container {
+            background: rgba(15, 15, 15, 0.5);
+            border-top: 1px solid #222;
+            padding: 30px 20px;
+            margin-top: 40px;
+            text-align: center;
+        }
+        .emergency-red {
+            color: #ff4444;
+            font-weight: 900;
+        }
     </style>
 </head>
-<body class="p-6 pb-20">
+<body class="p-6">
 
     <div class="flex flex-col items-center justify-center mt-6 mb-10 w-full">
         <img src="logo.png.jpg" class="w-32 h-32 rounded-full logo-main object-cover shadow-2xl">
@@ -96,6 +109,24 @@
         </div>
     </div>
 
+    <footer class="disclaimer-container">
+        <div class="max-w-xs mx-auto">
+            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-4">
+                Clinical Classification: Wellness & Self-Monitoring Support
+            </p>
+            <p class="text-[10px] leading-relaxed text-zinc-500 font-medium italic">
+                *Disclaimer: All data displayed and transmitted via this application is based exclusively on information submitted by the patient and <span class="text-zinc-300 font-bold">does not constitute an official medical record</span>. This tool is intended for wellness tracking and educational purposes only.*
+            </p>
+            <div class="h-[1px] w-12 bg-zinc-800 mx-auto my-4"></div>
+            <p class="text-[10px] font-black uppercase tracking-tight emergency-red mb-2">
+                ⚠️ IF YOU ARE EXPERIENCING A MEDICAL EMERGENCY, IMMEDIATELY CALL 911 OR GO TO THE NEAREST EMERGENCY ROOM.
+            </p>
+            <p class="text-[7px] text-zinc-600 font-bold uppercase mt-6 tracking-[0.2em]">
+                MONTCODE™ RESCUE v2.6.0 | © 2026 
+            </p>
+        </div>
+    </footer>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -117,7 +148,6 @@
                 const days = duration ? 7 : 365;
                 const expiry = Date.now() + (days * 24 * 60 * 60 * 1000);
                 
-                // PAREAMIENTO ÚNICO (Crea ID único basado en el código del Kit)
                 const drId = "DR-" + code.substring(3); 
                 
                 localStorage.setItem('montcode_auth', JSON.stringify({
@@ -141,13 +171,11 @@
                 const daysLeft = Math.ceil((auth.expiry - now) / (1000 * 60 * 60 * 24));
 
                 if(daysLeft > 0) {
-                    // Desbloquear Herramientas
                     document.querySelectorAll('.locked').forEach(el => el.classList.remove('locked'));
                     document.getElementById('enrollment-ui').classList.add('hidden');
                     document.getElementById('feedback-container').classList.remove('hidden');
                     
-                    // Escuchar al Dr Único (Pareamiento)
-                    const drRef = ref(db, 'mensaje_dr'); // Aquí se puede usar auth.drLink para canales privados
+                    const drRef = ref(db, 'mensaje_dr'); 
                     onValue(drRef, (snapshot) => {
                         const data = snapshot.val();
                         if(data && data.texto) {
@@ -164,7 +192,6 @@
     </script>
 </body>
 </html>
-
 
 
 

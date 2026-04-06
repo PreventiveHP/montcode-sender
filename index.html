@@ -2,156 +2,168 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENDER TEST - MontCode™</title>
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MontCode™ Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glow-cyan { box-shadow: 0 0 20px rgba(0, 255, 255, 0.15); }
-        .alert-pulse { animation: pulse-border 2s infinite; }
-        @keyframes pulse-border {
-            0% { border-color: #333; }
-            50% { border-color: #00ffff; }
-            100% { border-color: #333; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@400;900&display=swap');
+
+        body { 
+            background: #000; color: white; font-family: 'Inter', sans-serif; 
+            overflow-x: hidden; -webkit-tap-highlight-color: transparent;
         }
+
+        /* Efecto 3D Neón en Tarjetas */
+        .dash-card { 
+            background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+            border: 1px solid #333; border-radius: 28px; padding: 20px; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 140px; box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05);
+        }
+        .dash-card:active { transform: translateY(4px) scale(0.95); box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        
+        .neon-border-blue { border-color: #2563eb; box-shadow: 0 0 15px rgba(37, 99, 235, 0.3); }
+        .neon-border-green { border-color: #16a34a; box-shadow: 0 0 15px rgba(22, 163, 74, 0.3); }
+        .neon-border-yellow { border-color: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
+
+        /* Cuadro de Feedback 3D Live */
+        .feedback-box {
+            background: #050505; border: 2px solid #2563eb; border-radius: 24px;
+            padding: 20px; position: relative;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.4), inset 0 0 10px rgba(37, 99, 235, 0.1);
+            animation: pulse-3d 3s infinite alternate;
+        }
+        @keyframes pulse-3d {
+            from { transform: scale(1); box-shadow: 0 0 20px rgba(37, 99, 235, 0.4); }
+            to { transform: scale(1.01); box-shadow: 0 0 30px rgba(37, 99, 235, 0.6); }
+        }
+
+        .live-indicator {
+            width: 10px; height: 10px; background: #ef4444; border-radius: 50%;
+            display: inline-block; margin-right: 10px; animation: blink 1s infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .logo-main { filter: drop-shadow(0 0 20px rgba(218, 165, 32, 0.4)); border: 2px solid #DAA520; }
+        .btn-text { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #ccff00; margin-top: 8px; }
+        .locked { opacity: 0.2; filter: grayscale(1); pointer-events: none; }
     </style>
 </head>
-<body class="bg-black text-white flex flex-col items-center min-h-screen p-6 font-sans">
+<body class="p-6 pb-20">
 
-    <div class="w-full max-w-xs mb-8">
-        <label class="text-[10px] text-[#00ffff] uppercase tracking-[0.2em] block mb-3 font-black italic text-center">
-            Instruction Receiver Terminal
-        </label>
+    <div class="flex flex-col items-center justify-center mt-6 mb-10 w-full">
+        <img src="logo.png.jpg" class="w-32 h-32 rounded-full logo-main object-cover shadow-2xl">
+        <div class="mt-4 text-center">
+            <h1 class="text-3xl font-black tracking-tighter text-white uppercase italic font-family-Orbitron">MONTCODE™</h1>
+            <p id="tagline" class="text-[8px] font-bold text-blue-500 uppercase tracking-[0.25em] mt-2 opacity-90">
+                Created by Providers • Tested by Patients • Trusted for Life
+            </p>
+        </div>
+    </div>
+
+    <div id="enrollment-ui" class="mb-8 p-5 bg-zinc-900/80 border-2 border-dashed border-zinc-700 rounded-[28px] text-center">
+        <p id="status-label" class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">System Activation Required</p>
+        <button onclick="activateKit()" class="bg-blue-600 text-white text-[11px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-lg active:scale-95 transition">
+            Scan Kit Barcode (102***)
+        </button>
+        <p id="countdown" class="hidden mt-3 text-[10px] font-bold text-[#ccff00] italic"></p>
+    </div>
+
+    <div id="feedback-container" class="hidden mb-10 feedback-box">
+        <div class="flex items-center mb-3">
+            <span class="live-indicator"></span>
+            <span class="text-[10px] font-black uppercase text-blue-400 tracking-[0.2em]">Dr. Remote Transmission</span>
+        </div>
+        <p id="dr-text" class="text-sm font-bold italic text-zinc-200 leading-relaxed">
+            Establishing secure link with Dr. Provider...
+        </p>
+    </div>
+
+    <div id="tools-grid" class="grid grid-cols-2 gap-5">
+        <div onclick="location.href='./blood-pressure/index.html'" class="dash-card neon-border-blue locked">
+            <span class="text-4xl mb-2">❤️</span>
+            <h2 class="btn-text">BP Master</h2>
+        </div>
+        <div onclick="location.href='./glucose/index.html'" class="dash-card neon-border-green locked">
+            <span class="text-4xl mb-2">🩸</span>
+            <h2 class="btn-text">Glucose Master</h2>
+        </div>
+        <div onclick="location.href='./food/index.html'" class="dash-card neon-border-yellow col-span-2">
+            <span class="text-4xl mb-2">🥗</span>
+            <h2 class="btn-text">Food Scanner AI</h2>
+            <p class="text-[7px] text-zinc-500 font-bold mt-1 uppercase">No-Transmission Mode</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U",
+            databaseURL: "https://montcode-e02c7-default-rtdb.firebaseio.com",
+            projectId: "montcode-e02c7",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 1. SISTEMA DE ACTIVACIÓN 102***
+        window.activateKit = function() {
+            const code = prompt("ENTER 6-DIGIT KIT CODE:");
+            if(code && code.startsWith("102") && code.length === 6) {
+                const duration = confirm("Telemetry Mode:\nOK: 7 Days (Short)\nCancel: 365 Days (Full)");
+                const days = duration ? 7 : 365;
+                const expiry = Date.now() + (days * 24 * 60 * 60 * 1000);
+                
+                // PAREAMIENTO ÚNICO (Crea ID único basado en el código del Kit)
+                const drId = "DR-" + code.substring(3); 
+                
+                localStorage.setItem('montcode_auth', JSON.stringify({
+                    active: true,
+                    expiry: expiry,
+                    drLink: drId
+                }));
+                
+                alert("SYSTEM PAIRED WITH " + drId);
+                location.reload();
+            } else {
+                alert("INVALID CODE. MUST START WITH 102");
+            }
+        };
+
+        // 2. RECUPERACIÓN DE DATOS Y FEEDBACK
+        function initSystem() {
+            const auth = JSON.parse(localStorage.getItem('montcode_auth'));
+            if(auth && auth.active) {
+                const now = Date.now();
+                const daysLeft = Math.ceil((auth.expiry - now) / (1000 * 60 * 60 * 24));
+
+                if(daysLeft > 0) {
+                    // Desbloquear Herramientas
+                    document.querySelectorAll('.locked').forEach(el => el.classList.remove('locked'));
+                    document.getElementById('enrollment-ui').classList.add('hidden');
+                    document.getElementById('feedback-container').classList.remove('hidden');
+                    
+                    // Escuchar al Dr Único (Pareamiento)
+                    const drRef = ref(db, 'mensaje_dr'); // Aquí se puede usar auth.drLink para canales privados
+                    onValue(drRef, (snapshot) => {
+                        const data = snapshot.val();
+                        if(data && data.texto) {
+                            const txt = document.getElementById('dr-text');
+                            txt.innerText = data.texto;
+                            txt.className = "text-sm font-black italic text-[#ccff00] animate-pulse";
+                        }
+                    });
+                }
+            }
+        }
         
-        <div id="feedback-panel" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-3xl glow-cyan transition-all min-h-[120px] flex flex-col justify-center relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-zinc-800"></div>
-            
-            <div id="feedback-placeholder" class="text-zinc-600 text-[10px] uppercase text-center font-bold tracking-widest leading-tight">
-                No active instructions<br><span class="opacity-50 text-[8px]">Waiting for Provider...</span>
-            </div>
-
-            <div id="feedback-active" class="hidden">
-                <span class="text-[9px] text-[#00ffff] uppercase font-black block mb-2 tracking-widest underline decoration-2 offset-4">Incoming Message:</span>
-                <p id="feedback-content" class="text-lg text-white font-black italic leading-tight uppercase"></p>
-                <button onclick="dismissFeedback()" class="mt-4 text-[9px] text-zinc-500 font-bold uppercase tracking-widest hover:text-white transition-colors">× Clear Terminal</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="w-full max-w-xs border-t border-zinc-800 mb-8 opacity-30"></div>
-
-    <div class="text-center mb-6">
-        <div class="flex items-center justify-center gap-2 mb-1">
-            <h1 class="text-[#ccff00] text-xl font-black italic tracking-tighter uppercase">Patient Transmitter</h1>
-            <div id="conn-indicator" class="w-2 h-2 rounded-full bg-red-600 shadow-[0_0_8px_red]"></div>
-        </div>
-        <p class="text-zinc-600 text-[8px] font-bold uppercase tracking-[0.4em]">Secure Link v2.4</p>
-    </div>
-
-    <div class="w-full max-w-xs space-y-4">
-        <div class="flex justify-center py-2">
-            <button id="send-btn" onclick="enviarDato('PULSE ALERT')" 
-                class="w-28 h-28 bg-[#ccff00] text-black font-black rounded-full border-[6px] border-[#ccff00]/20 shadow-[0_0_30px_rgba(204,255,0,0.1)] active:scale-90 transition-all flex items-center justify-center">
-                <span class="text-lg font-black italic">PULSE</span>
-            </button>
-        </div>
-
-        <div class="bg-zinc-900/40 border border-zinc-800 p-4 rounded-2xl">
-            <div class="flex gap-2 mb-2">
-                <input type="number" id="bp-sys" placeholder="SYS" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00]">
-                <input type="number" id="bp-dia" placeholder="DIA" class="w-1/2 bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00]">
-            </div>
-            <button onclick="prepararEnvioBP()" class="w-full bg-[#ccff00] text-black font-black py-2.5 rounded-xl uppercase text-[9px] tracking-widest mb-4">Log Pressure</button>
-            
-            <input type="number" id="glu-val" placeholder="GLUCOSE mg/dL" class="w-full bg-black border border-zinc-800 rounded-xl p-3 text-center text-[#ccff00] font-bold outline-none focus:border-[#ccff00] mb-2">
-            <button onclick="prepararEnvioGLU()" class="w-full bg-[#ccff00] text-black font-black py-2.5 rounded-xl uppercase text-[9px] tracking-widest">Log Glucose</button>
-        </div>
-
-        <div class="pt-2">
-            <input type="text" id="chat-input" placeholder="Type note for Dr..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#ccff00] placeholder:text-zinc-700 mb-2">
-            <button onclick="enviarDesdeChat()" class="w-full bg-zinc-800 text-[#ccff00] font-black py-3 rounded-xl uppercase text-[10px] tracking-widest border border-zinc-700">Transmit Note</button>
-        </div>
-
-        <div id="status-box" class="text-center py-4">
-            <p id="status-text" class="text-zinc-700 font-bold text-[9px] uppercase tracking-widest italic">Link: Standby</p>
-        </div>
-    </div>
-
-    <script>
-        const pusher = new Pusher('284fc98940a4b6d4c359', { cluster: 'us2' });
-        const channel = pusher.subscribe("test-channel");
-
-        pusher.connection.bind('connected', () => {
-            document.getElementById('conn-indicator').className = "w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]";
-        });
-
-        // REIBIR INSTRUCCIONES
-        channel.bind('test-event', function(data) {
-            const content = data.text || "";
-            if (content.includes("CMD:FEEDBACK")) {
-                const parts = content.split('|MSG:');
-                if (parts.length > 1) {
-                    showFeedback(parts[1]);
-                }
-            }
-        });
-
-        function showFeedback(msg) {
-            document.getElementById('feedback-placeholder').classList.add('hidden');
-            document.getElementById('feedback-active').classList.remove('hidden');
-            document.getElementById('feedback-panel').classList.add('alert-pulse', 'border-[#00ffff]');
-            document.getElementById('feedback-content').innerText = msg;
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-        }
-
-        function dismissFeedback() {
-            document.getElementById('feedback-placeholder').classList.remove('hidden');
-            document.getElementById('feedback-active').classList.add('hidden');
-            document.getElementById('feedback-panel').classList.remove('alert-pulse', 'border-[#00ffff]');
-        }
-
-        // ENVIAR DATOS (SIN TOCAR LÓGICA)
-        async function enviarDato(contenido) {
-            const status = document.getElementById('status-text');
-            status.innerText = "TRANSMITTING...";
-            status.className = "text-yellow-500 font-bold text-[9px] animate-pulse uppercase tracking-widest";
-            try {
-                const response = await fetch('/api/pusher-relay', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: contenido, channel_id: "TEST-ID" })
-                });
-                if (response.ok) {
-                    status.innerText = "SUCCESS ✅";
-                    status.className = "text-[#ccff00] font-bold text-[9px] uppercase tracking-widest";
-                }
-            } catch (e) {
-                status.innerText = "FAILED ❌";
-                status.className = "text-red-500 font-bold text-[9px] uppercase tracking-widest";
-            }
-        }
-
-        function prepararEnvioBP() {
-            const s = document.getElementById('bp-sys').value;
-            const d = document.getElementById('bp-dia').value;
-            if (s && d) { enviarDato(`CMD:BP|SYS:${s}|DIA:${d}`); document.getElementById('bp-sys').value = ""; document.getElementById('bp-dia').value = ""; }
-        }
-
-        function prepararEnvioGLU() {
-            const g = document.getElementById('glu-val').value;
-            if (g) { enviarDato(`CMD:GLU|VAL:${g}`); document.getElementById('glu-val').value = ""; }
-        }
-
-        function enviarDesdeChat() {
-            const i = document.getElementById('chat-input');
-            if (i.value.trim()) { enviarDato(i.value); i.value = ""; }
-        }
+        initSystem();
     </script>
 </body>
 </html>
-
-
-
 
 
 

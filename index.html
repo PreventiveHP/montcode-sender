@@ -21,45 +21,57 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 140px; box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05);
         }
-        .dash-card:active { transform: translateY(4px) scale(0.95); box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        .dash-card:not(.locked):active { transform: translateY(4px) scale(0.95); box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
         
         .neon-border-blue { border-color: #2563eb; box-shadow: 0 0 15px rgba(37, 99, 235, 0.3); }
         .neon-border-green { border-color: #16a34a; box-shadow: 0 0 15px rgba(22, 163, 74, 0.3); }
         .neon-border-yellow { border-color: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
 
-        /* Cuadro de Feedback 3D Live */
+        /* Cuadro de Feedback 3D Live - Estilo Transmisión */
         .feedback-box {
-            background: #050505; border: 2px solid #2563eb; border-radius: 24px;
-            padding: 20px; position: relative;
-            box-shadow: 0 0 20px rgba(37, 99, 235, 0.4), inset 0 0 10px rgba(37, 99, 235, 0.1);
-            animation: pulse-3d 3s infinite alternate;
+            background: #050505; 
+            border: 2px solid #2563eb; 
+            border-radius: 24px;
+            padding: 20px; 
+            position: relative;
+            box-shadow: 0 0 25px rgba(37, 99, 235, 0.5), inset 0 0 15px rgba(37, 99, 235, 0.2);
+            animation: pulse-glow 2s infinite alternate;
         }
-        @keyframes pulse-3d {
-            from { transform: scale(1); box-shadow: 0 0 20px rgba(37, 99, 235, 0.4); }
-            to { transform: scale(1.01); box-shadow: 0 0 30px rgba(37, 99, 235, 0.6); }
+
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 20px rgba(37, 99, 235, 0.4); border-color: #1d4ed8; }
+            to { box-shadow: 0 0 35px rgba(37, 99, 235, 0.7); border-color: #3b82f6; }
         }
 
         .live-indicator {
             width: 10px; height: 10px; background: #ef4444; border-radius: 50%;
-            display: inline-block; margin-right: 10px; animation: blink 1s infinite;
+            display: inline-block; margin-right: 10px; animation: blink 0.8s infinite;
         }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Animación de Texto Parpadeante Estilo Terminal */
+        .live-text-anim {
+            animation: text-flicker 3s infinite;
+        }
+        @keyframes text-flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+            52% { opacity: 0.9; }
+            54% { opacity: 0.6; }
+        }
 
         .logo-main { filter: drop-shadow(0 0 20px rgba(218, 165, 32, 0.4)); border: 2px solid #DAA520; }
         .btn-text { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #ccff00; margin-top: 8px; }
-        .locked { opacity: 0.2; filter: grayscale(1); pointer-events: none; }
+        
+        /* Bloqueo total de herramientas */
+        .locked { opacity: 0.15; filter: grayscale(1) blur(1px); pointer-events: none; border-color: #222 !important; box-shadow: none !important; }
 
-        /* Disclaimer Styling */
         .disclaimer-container {
             background: rgba(15, 15, 15, 0.5);
             border-top: 1px solid #222;
             padding: 30px 20px;
             margin-top: 40px;
             text-align: center;
-        }
-        .emergency-red {
-            color: #ff4444;
-            font-weight: 900;
         }
     </style>
 </head>
@@ -80,16 +92,15 @@
         <button onclick="activateKit()" class="bg-blue-600 text-white text-[11px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-lg active:scale-95 transition">
             Scan Kit Barcode (102***)
         </button>
-        <p id="countdown" class="hidden mt-3 text-[10px] font-bold text-[#ccff00] italic"></p>
     </div>
 
     <div id="feedback-container" class="hidden mb-10 feedback-box">
         <div class="flex items-center mb-3">
             <span class="live-indicator"></span>
-            <span class="text-[10px] font-black uppercase text-blue-400 tracking-[0.2em]">Dr. Remote Transmission</span>
+            <span class="text-[10px] font-black uppercase text-blue-400 tracking-[0.2em]">Live Provider Link</span>
         </div>
-        <p id="dr-text" class="text-sm font-bold italic text-zinc-200 leading-relaxed">
-            Establishing secure link with Dr. Provider...
+        <p id="dr-text" class="text-sm font-bold italic text-zinc-200 leading-relaxed live-text-anim">
+            Waiting for encrypted data packet...
         </p>
     </div>
 
@@ -102,34 +113,26 @@
             <span class="text-4xl mb-2">🩸</span>
             <h2 class="btn-text">Glucose Master</h2>
         </div>
-        <div onclick="location.href='./food/index.html'" class="dash-card neon-border-yellow col-span-2">
+        <div onclick="location.href='./food/index.html'" class="dash-card neon-border-yellow col-span-2 locked">
             <span class="text-4xl mb-2">🥗</span>
             <h2 class="btn-text">Food Scanner AI</h2>
-            <p class="text-[7px] text-zinc-500 font-bold mt-1 uppercase">No-Transmission Mode</p>
+            <p class="text-[7px] text-zinc-500 font-bold mt-1 uppercase">Local Analysis Mode</p>
         </div>
     </div>
 
     <footer class="disclaimer-container">
-        <div class="max-w-xs mx-auto">
-            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-4">
-                Clinical Classification: Wellness & Self-Monitoring Support
-            </p>
+        <div class="max-w-xs mx-auto text-center">
+            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-4">Wellness & Self-Monitoring App</p>
             <p class="text-[10px] leading-relaxed text-zinc-500 font-medium italic">
-                *Disclaimer: All data displayed and transmitted via this application is based exclusively on information submitted by the patient and <span class="text-zinc-300 font-bold">does not constitute an official medical record</span>. This tool is intended for wellness tracking and educational purposes only.*
+                *Based on info submitted by patient, not official records. If this is an emergency, call 911 immediately.*
             </p>
-            <div class="h-[1px] w-12 bg-zinc-800 mx-auto my-4"></div>
-            <p class="text-[10px] font-black uppercase tracking-tight emergency-red mb-2">
-                ⚠️ IF YOU ARE EXPERIENCING A MEDICAL EMERGENCY, IMMEDIATELY CALL 911 OR GO TO THE NEAREST EMERGENCY ROOM.
-            </p>
-            <p class="text-[7px] text-zinc-600 font-bold uppercase mt-6 tracking-[0.2em]">
-                MONTCODE™ RESCUE v2.6.0 | © 2026 
-            </p>
+            <p class="text-[7px] text-zinc-600 font-bold uppercase mt-6 tracking-[0.2em]">MONTCODE™ RESCUE v2.6.0</p>
         </div>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U",
@@ -140,51 +143,35 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 1. SISTEMA DE ACTIVACIÓN 102***
         window.activateKit = function() {
             const code = prompt("ENTER 6-DIGIT KIT CODE:");
             if(code && code.startsWith("102") && code.length === 6) {
-                const duration = confirm("Telemetry Mode:\nOK: 7 Days (Short)\nCancel: 365 Days (Full)");
-                const days = duration ? 7 : 365;
-                const expiry = Date.now() + (days * 24 * 60 * 60 * 1000);
-                
-                const drId = "DR-" + code.substring(3); 
-                
-                localStorage.setItem('montcode_auth', JSON.stringify({
-                    active: true,
-                    expiry: expiry,
-                    drLink: drId
-                }));
-                
-                alert("SYSTEM PAIRED WITH " + drId);
+                const expiry = Date.now() + (365 * 24 * 60 * 60 * 1000);
+                localStorage.setItem('montcode_auth', JSON.stringify({ active: true, expiry: expiry }));
+                alert("SYSTEM ACTIVATED: ALL TOOLS UNLOCKED");
                 location.reload();
             } else {
-                alert("INVALID CODE. MUST START WITH 102");
+                alert("ACCESS DENIED: INVALID CODE");
             }
         };
 
-        // 2. RECUPERACIÓN DE DATOS Y FEEDBACK
         function initSystem() {
             const auth = JSON.parse(localStorage.getItem('montcode_auth'));
-            if(auth && auth.active) {
-                const now = Date.now();
-                const daysLeft = Math.ceil((auth.expiry - now) / (1000 * 60 * 60 * 24));
-
-                if(daysLeft > 0) {
-                    document.querySelectorAll('.locked').forEach(el => el.classList.remove('locked'));
-                    document.getElementById('enrollment-ui').classList.add('hidden');
-                    document.getElementById('feedback-container').classList.remove('hidden');
-                    
-                    const drRef = ref(db, 'mensaje_dr'); 
-                    onValue(drRef, (snapshot) => {
-                        const data = snapshot.val();
-                        if(data && data.texto) {
-                            const txt = document.getElementById('dr-text');
-                            txt.innerText = data.texto;
-                            txt.className = "text-sm font-black italic text-[#ccff00] animate-pulse";
-                        }
-                    });
-                }
+            if(auth && auth.active && auth.expiry > Date.now()) {
+                // Desbloqueo total
+                document.querySelectorAll('.locked').forEach(el => el.classList.remove('locked'));
+                document.getElementById('enrollment-ui').classList.add('hidden');
+                document.getElementById('feedback-container').classList.remove('hidden');
+                
+                const drRef = ref(db, 'mensaje_dr'); 
+                onValue(drRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if(data && data.texto) {
+                        const txt = document.getElementById('dr-text');
+                        txt.innerText = data.texto;
+                        txt.className = "text-sm font-black italic text-[#ccff00] live-text-anim";
+                    }
+                });
             }
         }
         
@@ -192,12 +179,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-

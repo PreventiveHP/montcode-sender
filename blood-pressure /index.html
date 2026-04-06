@@ -97,6 +97,33 @@
         </div>
     </div>
 
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U",
+        databaseURL: "https://montcode-e02c7-default-rtdb.firebaseio.com",
+        projectId: "montcode-e02c7",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const dbFB = getDatabase(app);
+
+    // Exportamos la función al scope global para que el botón SAVE funcione
+    window.transmitTelemetry = function(sys, dia, med) {
+        const telemetriaRef = ref(dbFB, 'telemetria_paciente');
+        push(telemetriaRef, {
+            val: `${sys}/${dia}`,
+            type: "BP",
+            meds: med ? "YES" : "NO",
+            time: new Date().toLocaleString(),
+            status: sys >= 140 || dia >= 90 ? "CRITICAL" : "NORMAL"
+        });
+        console.log("Telemetry transmitted to Dr.");
+    }
+</script>
+
 <script>
     let db = JSON.parse(localStorage.getItem('mc_bp_master_2026')) || [];
     let currentInput = "";
@@ -134,7 +161,6 @@
         return { l: "NORMAL", c: "#22c55e", r: "Maintain healthy control." };
     }
 
-    // FUNCIÓN DE VOZ RESTAURADA
     function speakReading(sys, dia) {
         const cls = getAHAClass(sys, dia);
         const map = Math.round((sys + (2 * dia)) / 3);
@@ -176,11 +202,18 @@
         if(currentInput.length < 5) return;
         const s = parseInt(currentInput.slice(0,3));
         const d = parseInt(currentInput.slice(3,6));
-        db.push({ sys: s, dia: d, med: document.getElementById('med-toggle').classList.contains('active'), d: new Date().toISOString() });
+        const medTaken = document.getElementById('med-toggle').classList.contains('active');
+        
+        // 1. Local Save
+        db.push({ sys: s, dia: d, med: medTaken, d: new Date().toISOString() });
         localStorage.setItem('mc_bp_master_2026', JSON.stringify(db));
         
-        speakReading(s, d); // LLAMADA A VOZ ACTIVADA
-        
+        // 2. TRANSMISSION TELEMETRY (FIREBASE)
+        if (typeof window.transmitTelemetry === 'function') {
+            window.transmitTelemetry(s, d, medTaken);
+        }
+
+        speakReading(s, d); 
         currentInput = ""; 
         updateDisplay(); 
         updateUI();
@@ -231,21 +264,17 @@
         rec.start();
     }
 
-    // PDF 100% CORREGIDO - MOTOR DE DESCARGA ACTIVO
     async function generatePDF() {
         if (db.length === 0) return alert("No history to report.");
-        
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            
             const avgSys = document.getElementById('sys-val').innerText;
             const avgDia = document.getElementById('dia-val').innerText;
             const mapVal = document.getElementById('map-val').innerText;
             const statusStr = document.getElementById('bp-status').innerText;
             const dateNow = new Date().toLocaleString();
 
-            // Encabezado
             doc.setFillColor(0, 51, 102); 
             doc.rect(0, 0, 210, 40, 'F');
             doc.setTextColor(255, 255, 255); 
@@ -254,7 +283,6 @@
             doc.setFontSize(10); 
             doc.text(`Report Generated: ${dateNow}`, 15, 30);
 
-            // Resumen
             doc.setTextColor(0); 
             doc.setFontSize(14); 
             doc.text("Hemodynamic Average", 15, 55);
@@ -263,13 +291,11 @@
             doc.text(`Avg MAP: ${mapVal} mmHg`, 15, 72);
             doc.text(`AHA Status: ${statusStr}`, 15, 79);
 
-            // Gráfico
             doc.text("Pressure Trend", 15, 95);
             const canvas = document.getElementById('bpChart');
             const chartImg = canvas.toDataURL('image/png');
             doc.addImage(chartImg, 'PNG', 15, 100, 180, 70);
 
-            // Logs
             doc.text("Recent Readings History", 15, 185);
             let y = 195; 
             doc.setFontSize(9);
@@ -283,11 +309,10 @@
             doc.setFontSize(7); 
             doc.setTextColor(150);
             doc.text("*Disclaimer: Patient-reported wellness data. 2026 MontCode Standard.*", 15, 285);
-            
             doc.save(`MontCode_Report_2026.pdf`);
         } catch (err) {
             console.error("PDF Error:", err);
-            alert("Error generating PDF. Check console.");
+            alert("Error generating PDF.");
         }
     }
 

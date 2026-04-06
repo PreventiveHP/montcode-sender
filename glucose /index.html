@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -117,12 +117,35 @@
                 <div class="bg-black text-[#ccff00] px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest italic">MontCode™ Bridge</div>
             </div>
             <div id="qrcode" class="bg-white p-2 inline-block rounded-xl mb-6"></div>
-            <p class="text-zinc-400 text-[8px] font-black uppercase px-6 leading-tight mb-8">
-                Detailed Transmission: Values + Time + Mode.<br>Scan with Clinical Audit Tool.
-            </p>
             <button onclick="document.getElementById('qrModal').classList.add('hidden')" class="bg-red-600 text-white w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest">Close Bridge</button>
         </div>
     </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U",
+        databaseURL: "https://montcode-e02c7-default-rtdb.firebaseio.com",
+        projectId: "montcode-e02c7",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const dbFB = getDatabase(app);
+
+    window.transmitGlucose = function(val, type) {
+        const telemetriaRef = ref(dbFB, 'telemetria_paciente');
+        push(telemetriaRef, {
+            val: val,
+            type: "GLU",
+            mode: type,
+            time: new Date().toLocaleString(),
+            status: val < 70 ? "LOW" : (val > 180 ? "HIGH" : "NORMAL")
+        });
+        console.log("Glucose Telemetry Sync Complete.");
+    }
+</script>
 
 <script>
     let db = JSON.parse(localStorage.getItem('mc_glu_master_2026')) || [];
@@ -161,9 +184,16 @@
     function saveGlu() {
         if(!currentInput) return;
         const val = parseInt(currentInput);
+        
+        // 1. Local Persistence
         db.push({ v: val, t: selectedTime, d: new Date().toISOString() });
         localStorage.setItem('mc_glu_master_2026', JSON.stringify(db));
         
+        // 2. TRANSMIT TELEMETRY
+        if (typeof window.transmitGlucose === 'function') {
+            window.transmitGlucose(val, selectedTime);
+        }
+
         const msg = currentLang === 'es' ? `${val} miligramos.` : `${val} milligrams.`;
         const u = new SpeechSynthesisUtterance(msg);
         u.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
@@ -189,48 +219,21 @@
         updateChart();
     }
 
-    // --- MEJORA DEL PAYLOAD PARA REPORTE DETALLADO ---
     function generateDoctorQR() {
-        if (!db || db.length < 1) {
-            alert(currentLang === 'es' ? "Se requiere información." : "Data required.");
-            return;
-        }
-
+        if (!db || db.length < 1) return alert("No data");
         const avg = document.getElementById('avg-val').innerText;
         const a1c = document.getElementById('a1c-val').innerText.replace('%','');
-
-        // Mapeamos los logs con información completa: [Valor, Tipo(0=Fast, 1=Post), Timestamp_en_segundos]
-        // Enviamos los últimos 15 para mantener el QR escaneable pero detallado
-        const detailedLogs = db.slice(-15).map(log => [
-            log.v, 
-            log.t === 'fasting' ? 0 : 1,
-            Math.floor(new Date(log.d).getTime() / 1000)
-        ]);
-
         const payload = {
             a: parseInt(avg),
             h: parseFloat(a1c),
-            l: detailedLogs,
+            l: db.slice(-15).map(log => [log.v, log.t === 'fasting' ? 0 : 1, Math.floor(new Date(log.d).getTime() / 1000)]),
             ts: Math.floor(Date.now() / 1000)
         };
-
-        const jsonStr = JSON.stringify(payload);
-        const base64Safe = btoa(unescape(encodeURIComponent(jsonStr)))
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=+$/, '');
-
+        const base64Safe = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         const targetUrl = `${window.location.origin}/glu-audit.html#${base64Safe}`;
-
         const qrContainer = document.getElementById("qrcode");
         qrContainer.innerHTML = "";
-        new QRCode(qrContainer, {
-            text: targetUrl,
-            width: 220,
-            height: 220,
-            colorDark: "#000000",
-            correctLevel: QRCode.CorrectLevel.L // Nivel L para permitir más datos en el mismo tamaño
-        });
+        new QRCode(qrContainer, { text: targetUrl, width: 220, height: 220, colorDark: "#000000", correctLevel: QRCode.CorrectLevel.L });
         document.getElementById('qrModal').classList.remove('hidden');
     }
 
@@ -239,14 +242,7 @@
         chart = new Chart(ctx, {
             type: 'line',
             data: { labels: [], datasets: [{ data: [], borderColor: '#ccff00', borderWidth: 3, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#ccff00', fill: true, backgroundColor: 'rgba(204, 255, 0, 0.05)' }] },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { display: false } },
-                scales: { 
-                    y: { grid: { color: '#111' }, ticks: { color: '#444', font: { size: 9 } } },
-                    x: { ticks: { color: '#888', font: { size: 8 } } }
-                } 
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#111' }, ticks: { color: '#444', font: { size: 9 } } }, x: { ticks: { color: '#888', font: { size: 8 } } } } }
         });
     }
 
@@ -266,11 +262,9 @@
         doc.setTextColor(204, 255, 0); doc.setFontSize(18); doc.text("MontCode™ Glucose Audit Report", 15, 20);
         doc.setTextColor(255, 255, 255); doc.setFontSize(9); 
         doc.text(`DATE: ${new Date().toLocaleDateString()} | AVG: ${avg} mg/dL | EST. A1C: ${a1c}`, 15, 32);
-        doc.setTextColor(0); doc.setFontSize(10); doc.text("Glucose Trend (Last 10 Logs)", 15, 60);
         doc.addImage(document.getElementById('gluChart').toDataURL('image/png'), 'PNG', 15, 65, 180, 70);
         let y = 160;
-        doc.setFont("helvetica", "bold"); doc.text("Clinical Log History:", 15, 155);
-        doc.setFontSize(7); doc.setFont("helvetica", "normal"); 
+        doc.setTextColor(0); doc.setFontSize(7);
         db.slice(-25).reverse().forEach(log => {
             if (y > 280) return; 
             doc.text(`${new Date(log.d).toLocaleString()} | Value: ${log.v} mg/dL | Mode: ${log.t.toUpperCase()}`, 15, y);
@@ -281,10 +275,7 @@
 
     function setLang(lang) {
         currentLang = lang;
-        const t = { 
-            en: { avg: "Avg Glucose", save: "SAVE GLUCOSE", fast: "FASTING", post: "POST-MEAL" }, 
-            es: { avg: "Promedio", save: "GUARDAR GLUCOSA", fast: "AYUNAS", post: "POST-COMIDA" } 
-        }[lang];
+        const t = { en: { avg: "Avg Glucose", save: "SAVE GLUCOSE", fast: "FASTING", post: "POST-MEAL" }, es: { avg: "Promedio", save: "GUARDAR GLUCOSA", fast: "AYUNAS", post: "POST-COMIDA" } }[lang];
         document.querySelector('.lang-avg').innerText = t.avg;
         document.querySelector('.lang-save').innerText = t.save;
         document.getElementById('time-fast').innerText = t.fast;

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -25,7 +25,7 @@
         .chart-modern { background: #050505; border-radius: 30px; border: 1px solid #1a1a1a; padding: 12px; margin-top: 15px; height: 180px; }
         .cond-chip { padding: 6px 12px; border-radius: 12px; font-size: 9px; font-weight: 900; border: 1px solid #222; color: #444; cursor: pointer; transition: 0.3s; }
         .cond-chip.active { border-color: #ccff00; color: #ccff00; background: rgba(204, 255, 0, 0.1); }
-        .status-banner { width: 100%; height: 50px; background: #0a0a0a; border-radius: 24px; border: 1px dashed #333; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+        .status-banner { width: 100%; height: 50px; background: #0a0a0a; border-radius: 24px; border: 1px dashed #333; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; transition: 0.5s all; }
         .time-btn { padding: 10px 15px; border-radius: 15px; font-size: 9px; font-weight: 900; border: 1px solid #1a1a1a; color: #444; cursor: pointer; background: #0a0a0a; }
         .time-btn.active { border-color: #ccff00; color: #ccff00; background: rgba(204, 255, 0, 0.1); }
     </style>
@@ -44,7 +44,7 @@
 
     <div class="status-banner" id="status-box">
         <div class="flex items-center gap-3">
-            <div class="w-2 h-2 bg-lime-500 rounded-full animate-pulse"></div>
+            <div class="w-2 h-2 bg-lime-500 rounded-full animate-pulse" id="status-dot"></div>
             <p class="text-lime-500 font-black uppercase text-[9px] tracking-widest" id="status-text">CALIBRATING SYSTEM</p>
         </div>
     </div>
@@ -112,7 +112,7 @@
     </footer>
 
     <div id="qrModal" class="hidden fixed inset-0 bg-black/98 flex items-center justify-center z-50 p-6 backdrop-blur-md">
-        <div class="bg-white rounded-[40px] p-8 w-full max-w-sm text-center shadow-2xl">
+        <div class="bg-white rounded-[40px] p-8 w-full max-sm text-center shadow-2xl">
             <div class="flex justify-center mb-6">
                 <div class="bg-black text-[#ccff00] px-5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest italic">MontCode™ Bridge</div>
             </div>
@@ -123,7 +123,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U",
@@ -133,18 +133,40 @@
 
     const app = initializeApp(firebaseConfig);
     const dbFB = getDatabase(app);
+    const PACIENTE_ID = "M001"; // ID de referencia para el Dr.
 
-    window.transmitGlucose = function(val, type) {
-        const telemetriaRef = ref(dbFB, 'telemetria_paciente');
+    // FUNCIÓN DE ENVÍO INTEGRADA
+    window.transmitGlucose = function(val, mode) {
+        const telemetriaRef = ref(dbFB, `pacientes/${PACIENTE_ID}/telemetria`);
         push(telemetriaRef, {
             val: val,
             type: "GLU",
-            mode: type,
-            time: new Date().toLocaleString(),
+            mode: mode,
+            time: Date.now(),
             status: val < 70 ? "LOW" : (val > 180 ? "HIGH" : "NORMAL")
         });
-        console.log("Glucose Telemetry Sync Complete.");
     }
+
+    // ESCUCHADOR DE MENSAJES DEL DOCTOR (BRIDGE)
+    onValue(ref(dbFB, `mensajes/${PACIENTE_ID}`), (snapshot) => {
+        const data = snapshot.val();
+        if(data && data.texto) {
+            const box = document.getElementById('status-box');
+            const textEl = document.getElementById('status-text');
+            const dot = document.getElementById('status-dot');
+            
+            textEl.innerText = "DR: " + data.texto;
+            textEl.style.color = "#3b82f6"; // Color azul para el Dr.
+            dot.style.background = "#3b82f6";
+            box.style.borderColor = "#3b82f6";
+            box.style.background = "rgba(59, 130, 246, 0.1)";
+            
+            // Anuncio de voz automático del mensaje del Dr.
+            const utterance = new SpeechSynthesisUtterance(data.texto);
+            utterance.lang = window.currentLang === 'es' ? 'es-ES' : 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+    });
 </script>
 
 <script>
@@ -152,7 +174,7 @@
     let currentInput = "";
     let selectedTime = "fasting";
     let chart;
-    let currentLang = 'en';
+    window.currentLang = 'en';
 
     window.onload = () => {
         initChart();
@@ -185,18 +207,16 @@
         if(!currentInput) return;
         const val = parseInt(currentInput);
         
-        // 1. Local Persistence
         db.push({ v: val, t: selectedTime, d: new Date().toISOString() });
         localStorage.setItem('mc_glu_master_2026', JSON.stringify(db));
         
-        // 2. TRANSMIT TELEMETRY
         if (typeof window.transmitGlucose === 'function') {
             window.transmitGlucose(val, selectedTime);
         }
 
-        const msg = currentLang === 'es' ? `${val} miligramos.` : `${val} milligrams.`;
+        const msg = window.currentLang === 'es' ? `${val} miligramos.` : `${val} milligrams.`;
         const u = new SpeechSynthesisUtterance(msg);
-        u.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
+        u.lang = window.currentLang === 'es' ? 'es-ES' : 'en-US';
         window.speechSynthesis.speak(u);
 
         currentInput = ""; 
@@ -274,7 +294,7 @@
     }
 
     function setLang(lang) {
-        currentLang = lang;
+        window.currentLang = lang;
         const t = { en: { avg: "Avg Glucose", save: "SAVE GLUCOSE", fast: "FASTING", post: "POST-MEAL" }, es: { avg: "Promedio", save: "GUARDAR GLUCOSA", fast: "AYUNAS", post: "POST-COMIDA" } }[lang];
         document.querySelector('.lang-avg').innerText = t.avg;
         document.querySelector('.lang-save').innerText = t.save;
@@ -286,7 +306,7 @@
 
     function startMic() {
         const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        rec.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
+        rec.lang = window.currentLang === 'es' ? 'es-ES' : 'en-US';
         rec.onresult = (e) => {
             const v = e.results[0][0].transcript.replace(/\D/g,'');
             if(v) { currentInput = v.slice(0,3); document.getElementById('display').innerText = currentInput; }
@@ -296,5 +316,3 @@
 </script>
 </body>
 </html>
-
-

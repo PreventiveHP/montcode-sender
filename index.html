@@ -1,43 +1,100 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONTCODE SENDER</title>
+    <title>SENDER TEST - MontCode™</title>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white flex items-center justify-center min-h-screen p-6" id="bg">
-    <div class="text-center p-10 border-2 border-zinc-800 rounded-[3rem] bg-zinc-900/50 max-w-sm w-full shadow-2xl">
-        <p id="st" class="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-4 italic">Waiting for Dr...</p>
-        <p id="msg" class="text-4xl font-black italic uppercase text-zinc-800 transition-all leading-tight">OFFLINE</p>
+<body class="bg-black text-white flex flex-col items-center justify-center min-h-screen p-6 font-sans">
+
+    <div class="text-center mb-10">
+        <h1 class="text-[#ccff00] text-3xl font-black italic tracking-tighter uppercase leading-none">SENDER TEST</h1>
+        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Bridge Transmitter v2.0</p>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    <button id="send-btn" onclick="enviarDato('HOLA MUNDO DESDE EL TEST')" 
+        class="w-48 h-48 bg-[#ccff00] text-black font-black rounded-full border-[10px] border-[#ccff00]/20 shadow-[0_0_50px_rgba(204,255,0,0.1)] active:scale-95 transition-all flex flex-col items-center justify-center focus:outline-none mb-10">
+        <span class="text-2xl italic uppercase leading-none">PULSE</span>
+        <span class="text-[9px] opacity-70 mt-1 uppercase tracking-[0.1em]">Fixed Alert</span>
+    </button>
 
-        // CONFIG (MISMAS KEYS)
-        const config = {
-            apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U",
-            databaseURL: "https://montcode-e02c7-default-rtdb.firebaseio.com",
-            projectId: "montcode-e02c7"
-        };
-        const app = initializeApp(config);
-        const db = getDatabase(app);
+    <div class="w-full max-w-xs space-y-3">
+        <div class="flex flex-col">
+            <label class="text-[9px] text-zinc-600 uppercase tracking-widest ml-2 mb-1 font-bold">Live Terminal</label>
+            <input type="text" id="chat-input" 
+                placeholder="Type medical note..." 
+                class="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-[#ccff00] transition-all placeholder:text-zinc-700">
+        </div>
 
-        // AQUÍ PONES EL ID DEL PACIENTE DUEÑO DEL TELÉFONO
-        const MI_ID = "12345"; 
+        <button onclick="enviarDesdeChat()" 
+            class="w-full bg-zinc-800 hover:bg-zinc-700 text-[#ccff00] font-bold py-3 rounded-xl transition-all uppercase text-[11px] tracking-widest border border-zinc-700">
+            Transmit Chat
+        </button>
+    </div>
 
-        onValue(ref(db, `mensaje_dr/${MI_ID}`), (snap) => {
-            const data = snap.val();
-            if (data && data.texto) {
-                document.getElementById('st').innerText = "NEW MEDICAL INSTRUCTION";
-                document.getElementById('st').className = "text-[#ccff00] text-[10px] font-black mb-4 animate-pulse";
-                document.getElementById('msg').innerText = data.texto;
-                document.getElementById('msg').className = "text-4xl font-black italic uppercase text-[#ccff00]";
-                document.getElementById('bg').style.backgroundColor = "#001a1a";
+    <div id="status-box" class="mt-10 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 w-full max-w-xs text-center">
+        <p id="status-text" class="text-zinc-600 font-bold text-[10px] uppercase tracking-widest">System Ready</p>
+    </div>
+
+    <script>
+        // Función principal de envío por el "Tubo Digital"
+        async function enviarDato(contenido) {
+            const status = document.getElementById('status-text');
+            const btn = document.getElementById('send-btn');
+
+            if (!contenido) return;
+
+            status.innerText = "TRANSMITTING...";
+            status.className = "text-yellow-500 font-bold text-[10px] animate-pulse uppercase tracking-widest";
+            btn.style.opacity = "0.5";
+
+            try {
+                const response = await fetch('/api/pusher-relay', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: contenido,
+                        channel_id: "TEST-ID" 
+                    })
+                });
+
+                if (response.ok) {
+                    status.innerText = "TRANSMISSION SUCCESS ✅";
+                    status.className = "text-[#ccff00] font-bold text-[10px] uppercase tracking-widest";
+                } else {
+                    throw new Error("Relay Error");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                status.innerText = "LINK FAILED ❌";
+                status.className = "text-red-500 font-bold text-[10px] uppercase tracking-widest";
+            } finally {
+                btn.style.opacity = "1";
+            }
+        }
+
+        // Función para capturar el texto del input
+        function enviarDesdeChat() {
+            const input = document.getElementById('chat-input');
+            const mensaje = input.value.trim();
+            
+            if (mensaje !== "") {
+                enviarDato(mensaje);
+                input.value = ""; // Limpiar tras enviar
+            } else {
+                alert("Please enter a message");
+            }
+        }
+
+        // Permitir enviar con la tecla Enter
+        document.getElementById('chat-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                enviarDesdeChat();
             }
         });
     </script>
 </body>
 </html>
+

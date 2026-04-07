@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,7 +22,7 @@
         .chart-modern { background: #050505; border-radius: 30px; border: 1px solid #1a1a1a; padding: 15px; margin-top: 20px; height: 220px; }
         .cond-chip { padding: 4px 10px; border-radius: 10px; font-size: 8px; font-weight: 900; border: 1px solid #222; color: #444; cursor: pointer; }
         .cond-chip.active { border-color: #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
-        .status-banner { width: 100%; height: 80px; background: #0a0a0a; border-radius: 24px; border: 1px dashed #333; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+        .status-banner { width: 100%; height: 80px; background: #0a0a0a; border-radius: 24px; border: 1px dashed #333; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 15px; padding: 10px; text-align: center; }
     </style>
 </head>
 <body class="pb-10">
@@ -99,7 +99,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U",
@@ -109,26 +109,41 @@
 
     const app = initializeApp(firebaseConfig);
     const dbFB = getDatabase(app);
+    const PACIENTE_ID = "M001"; // ID vinculado al Sentinel del Dr.
 
-    // Exportamos la función al scope global para que el botón SAVE funcione
     window.transmitTelemetry = function(sys, dia, med) {
-        const telemetriaRef = ref(dbFB, 'telemetria_paciente');
+        const telemetriaRef = ref(dbFB, `pacientes/${PACIENTE_ID}/telemetria`);
         push(telemetriaRef, {
-            val: `${sys}/${dia}`,
+            sys: sys,
+            dia: dia,
+            map: Math.round((sys + (2 * dia)) / 3),
             type: "BP",
             meds: med ? "YES" : "NO",
-            time: new Date().toLocaleString(),
-            status: sys >= 140 || dia >= 90 ? "CRITICAL" : "NORMAL"
+            time: Date.now(),
+            status: sys >= 140 || dia >= 90 ? "HIGH" : "NORMAL"
         });
-        console.log("Telemetry transmitted to Dr.");
+        console.log("Telemetry sent for ID:", PACIENTE_ID);
     }
+
+    // Escuchar mensajes del Doctor
+    const msgRef = ref(dbFB, `mensajes/${PACIENTE_ID}`);
+    onValue(msgRef, (snapshot) => {
+        const data = snapshot.val();
+        if(data && data.texto) {
+            document.getElementById('status-text').innerText = "DR: " + data.texto;
+            document.getElementById('status-box').style.borderColor = "#3b82f6";
+            const utterance = new SpeechSynthesisUtterance(data.texto);
+            utterance.lang = window.currentLang === 'es' ? 'es-ES' : 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+    });
 </script>
 
 <script>
     let db = JSON.parse(localStorage.getItem('mc_bp_master_2026')) || [];
     let currentInput = "";
     let chart;
-    let currentLang = 'en';
+    window.currentLang = 'en';
 
     window.onload = () => {
         initChart();
@@ -154,26 +169,26 @@
     }
 
     function getAHAClass(sys, dia) {
-        if (sys >= 180 || dia >= 120) return { l: "CRISIS", c: "#ff0000", r: "Seek emergency care." };
-        if (sys >= 140 || dia >= 90) return { l: "STAGE 2", c: "#f97316", r: "Consult Dr. regarding medication." };
-        if (sys >= 130 || dia >= 80) return { l: "STAGE 1", c: "#fbbf24", r: "Lifestyle changes & follow-up." };
-        if (sys >= 120 && dia < 80) return { l: "ELEVATED", c: "#facc15", r: "Monitor closely." };
-        return { l: "NORMAL", c: "#22c55e", r: "Maintain healthy control." };
+        if (sys >= 180 || dia >= 120) return { l: "CRISIS", c: "#ff0000" };
+        if (sys >= 140 || dia >= 90) return { l: "STAGE 2", c: "#f97316" };
+        if (sys >= 130 || dia >= 80) return { l: "STAGE 1", c: "#fbbf24" };
+        if (sys >= 120 && dia < 80) return { l: "ELEVATED", c: "#facc15" };
+        return { l: "NORMAL", c: "#22c55e" };
     }
 
     function speakReading(sys, dia) {
         const cls = getAHAClass(sys, dia);
         const map = Math.round((sys + (2 * dia)) / 3);
-        const msg = currentLang === 'es' ? 
+        const msg = window.currentLang === 'es' ? 
             `Presión ${sys} sobre ${dia}. PAM de ${map}. Estado ${cls.l}.` : 
             `Pressure ${sys} over ${dia}. MAP of ${map}. Status ${cls.l}.`;
         const utterance = new SpeechSynthesisUtterance(msg);
-        utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
+        utterance.lang = window.currentLang === 'es' ? 'es-ES' : 'en-US';
         window.speechSynthesis.speak(utterance);
     }
 
     function setLang(lang) {
-        currentLang = lang;
+        window.currentLang = lang;
         const translations = {
             en: { sys: "SYS Avg", dia: "DIA Avg", med: "Medication Taken Today?", save: "SAVE BP READING", clear: "Clear History" },
             es: { sys: "SIS Prom.", dia: "DIA Prom.", med: "¿Tomó medicina hoy?", save: "GUARDAR PRESIÓN", clear: "Borrar Historial" }
@@ -184,6 +199,9 @@
         document.querySelector('.lang-med').innerText = t.med;
         document.querySelector('.lang-save').innerText = t.save;
         document.querySelector('.lang-clear').innerText = t.clear;
+        
+        document.getElementById('btn-en').style.opacity = lang === 'en' ? '1' : '0.4';
+        document.getElementById('btn-es').style.opacity = lang === 'es' ? '1' : '0.4';
     }
 
     function press(n) {
@@ -204,11 +222,9 @@
         const d = parseInt(currentInput.slice(3,6));
         const medTaken = document.getElementById('med-toggle').classList.contains('active');
         
-        // 1. Local Save
         db.push({ sys: s, dia: d, med: medTaken, d: new Date().toISOString() });
         localStorage.setItem('mc_bp_master_2026', JSON.stringify(db));
         
-        // 2. TRANSMISSION TELEMETRY (FIREBASE)
         if (typeof window.transmitTelemetry === 'function') {
             window.transmitTelemetry(s, d, medTaken);
         }
@@ -239,10 +255,15 @@
         chart = new Chart(ctx, {
             type: 'line',
             data: { labels: [], datasets: [
-                { label: 'SYS', data: [], borderColor: '#fff', tension: 0.3 },
-                { label: 'DIA', data: [], borderColor: '#3b82f6', tension: 0.3 }
+                { label: 'SYS', data: [], borderColor: '#fff', tension: 0.3, pointRadius: 0 },
+                { label: 'DIA', data: [], borderColor: '#3b82f6', tension: 0.3, pointRadius: 0 }
             ]},
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { grid: { color: '#111' }, ticks: { color: '#444', font: { size: 8 } } } }
+            }
         });
     }
 
@@ -256,7 +277,7 @@
 
     function startMic() {
         const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        rec.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
+        rec.lang = window.currentLang === 'es' ? 'es-ES' : 'en-US';
         rec.onresult = (e) => {
             const v = e.results[0][0].transcript.replace(/\D/g,'');
             if(v) { currentInput = v.slice(0,6); updateDisplay(); }
@@ -266,58 +287,24 @@
 
     async function generatePDF() {
         if (db.length === 0) return alert("No history to report.");
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const avgSys = document.getElementById('sys-val').innerText;
-            const avgDia = document.getElementById('dia-val').innerText;
-            const mapVal = document.getElementById('map-val').innerText;
-            const statusStr = document.getElementById('bp-status').innerText;
-            const dateNow = new Date().toLocaleString();
-
-            doc.setFillColor(0, 51, 102); 
-            doc.rect(0, 0, 210, 40, 'F');
-            doc.setTextColor(255, 255, 255); 
-            doc.setFontSize(22); 
-            doc.text("MontCode™ Clinical Report", 15, 20);
-            doc.setFontSize(10); 
-            doc.text(`Report Generated: ${dateNow}`, 15, 30);
-
-            doc.setTextColor(0); 
-            doc.setFontSize(14); 
-            doc.text("Hemodynamic Average", 15, 55);
-            doc.setFontSize(11);
-            doc.text(`Avg Pressure: ${avgSys}/${avgDia} mmHg`, 15, 65);
-            doc.text(`Avg MAP: ${mapVal} mmHg`, 15, 72);
-            doc.text(`AHA Status: ${statusStr}`, 15, 79);
-
-            doc.text("Pressure Trend", 15, 95);
-            const canvas = document.getElementById('bpChart');
-            const chartImg = canvas.toDataURL('image/png');
-            doc.addImage(chartImg, 'PNG', 15, 100, 180, 70);
-
-            doc.text("Recent Readings History", 15, 185);
-            let y = 195; 
-            doc.setFontSize(9);
-            const logs = db.slice(-12).reverse();
-            logs.forEach(log => {
-                const logPAM = Math.round((log.sys + (2*log.dia))/3);
-                doc.text(`${new Date(log.d).toLocaleString()} | ${log.sys}/${log.dia} (MAP: ${logPAM}) | Meds: ${log.med?'YES':'NO'}`, 15, y);
-                y += 7;
-            });
-
-            doc.setFontSize(7); 
-            doc.setTextColor(150);
-            doc.text("*Disclaimer: Patient-reported wellness data. 2026 MontCode Standard.*", 15, 285);
-            doc.save(`MontCode_Report_2026.pdf`);
-        } catch (err) {
-            console.error("PDF Error:", err);
-            alert("Error generating PDF.");
-        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFillColor(0, 51, 102); 
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255, 255, 255); 
+        doc.setFontSize(22); 
+        doc.text("MontCode™ Clinical Report", 15, 20);
+        doc.setFontSize(10); 
+        doc.text(`Report Generated: ${new Date().toLocaleString()}`, 15, 30);
+        doc.setTextColor(0); 
+        doc.text(`Avg Pressure: ${document.getElementById('sys-val').innerText}/${document.getElementById('dia-val').innerText}`, 15, 65);
+        doc.text(`AHA Status: ${document.getElementById('bp-status').innerText}`, 15, 79);
+        const chartImg = document.getElementById('bpChart').toDataURL('image/png');
+        doc.addImage(chartImg, 'PNG', 15, 100, 180, 70);
+        doc.save(`MontCode_Report_2026.pdf`);
     }
 
     function clearAll() { if(confirm("Clear history?")) { db=[]; localStorage.removeItem('mc_bp_master_2026'); location.reload(); } }
 </script>
 </body>
 </html>
-

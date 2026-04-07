@@ -109,8 +109,9 @@
 
     const app = initializeApp(firebaseConfig);
     const dbFB = getDatabase(app);
-    const PACIENTE_ID = "M001"; // ID vinculado al Sentinel del Dr.
+    const PACIENTE_ID = "M001"; 
 
+    // FIX: Hacemos la función global para que el botón SAVE pueda verla
     window.transmitTelemetry = function(sys, dia, med) {
         const telemetriaRef = ref(dbFB, `pacientes/${PACIENTE_ID}/telemetria`);
         push(telemetriaRef, {
@@ -122,16 +123,19 @@
             time: Date.now(),
             status: sys >= 140 || dia >= 90 ? "HIGH" : "NORMAL"
         });
-        console.log("Telemetry sent for ID:", PACIENTE_ID);
+        console.log("Telemetry sent to cloud mirror.");
     }
 
-    // Escuchar mensajes del Doctor
+    // FIX: Escucha en tiempo real del Sentinel
     const msgRef = ref(dbFB, `mensajes/${PACIENTE_ID}`);
     onValue(msgRef, (snapshot) => {
         const data = snapshot.val();
         if(data && data.texto) {
             document.getElementById('status-text').innerText = "DR: " + data.texto;
             document.getElementById('status-box').style.borderColor = "#3b82f6";
+            document.getElementById('status-box').style.borderStyle = "solid";
+            
+            // Voz del Doctor
             const utterance = new SpeechSynthesisUtterance(data.texto);
             utterance.lang = window.currentLang === 'es' ? 'es-ES' : 'en-US';
             window.speechSynthesis.speak(utterance);
@@ -140,6 +144,7 @@
 </script>
 
 <script>
+    // Toda tu lógica original de UI e historial
     let db = JSON.parse(localStorage.getItem('mc_bp_master_2026')) || [];
     let currentInput = "";
     let chart;
@@ -225,7 +230,8 @@
         db.push({ sys: s, dia: d, med: medTaken, d: new Date().toISOString() });
         localStorage.setItem('mc_bp_master_2026', JSON.stringify(db));
         
-        if (typeof window.transmitTelemetry === 'function') {
+        // Llamada a la función de Firebase global
+        if (window.transmitTelemetry) {
             window.transmitTelemetry(s, d, medTaken);
         }
 

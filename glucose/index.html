@@ -133,9 +133,9 @@
 
     const app = initializeApp(firebaseConfig);
     const dbFB = getDatabase(app);
-    const PACIENTE_ID = "M001"; // ID de referencia para el Dr.
+    const PACIENTE_ID = "M001"; 
 
-    // FUNCIÓN DE ENVÍO INTEGRADA
+    // FIX: Exponer función globalmente para el botón de Guardar
     window.transmitGlucose = function(val, mode) {
         const telemetriaRef = ref(dbFB, `pacientes/${PACIENTE_ID}/telemetria`);
         push(telemetriaRef, {
@@ -145,9 +145,10 @@
             time: Date.now(),
             status: val < 70 ? "LOW" : (val > 180 ? "HIGH" : "NORMAL")
         });
+        console.log("Glucose Sync: Sent");
     }
 
-    // ESCUCHADOR DE MENSAJES DEL DOCTOR (BRIDGE)
+    // FIX: Escuchador del Bridge (Mensajes del Doctor)
     onValue(ref(dbFB, `mensajes/${PACIENTE_ID}`), (snapshot) => {
         const data = snapshot.val();
         if(data && data.texto) {
@@ -156,12 +157,13 @@
             const dot = document.getElementById('status-dot');
             
             textEl.innerText = "DR: " + data.texto;
-            textEl.style.color = "#3b82f6"; // Color azul para el Dr.
+            textEl.style.color = "#3b82f6"; 
             dot.style.background = "#3b82f6";
             box.style.borderColor = "#3b82f6";
+            box.style.borderStyle = "solid";
             box.style.background = "rgba(59, 130, 246, 0.1)";
             
-            // Anuncio de voz automático del mensaje del Dr.
+            // Voz automática
             const utterance = new SpeechSynthesisUtterance(data.texto);
             utterance.lang = window.currentLang === 'es' ? 'es-ES' : 'en-US';
             window.speechSynthesis.speak(utterance);
@@ -210,6 +212,7 @@
         db.push({ v: val, t: selectedTime, d: new Date().toISOString() });
         localStorage.setItem('mc_glu_master_2026', JSON.stringify(db));
         
+        // Ejecución de la transmisión a Firebase
         if (typeof window.transmitGlucose === 'function') {
             window.transmitGlucose(val, selectedTime);
         }

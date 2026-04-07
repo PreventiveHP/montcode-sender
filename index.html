@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -26,6 +26,7 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 140px; box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05);
+            cursor: pointer;
         }
         .dash-card:not(.locked):active { transform: translateY(4px) scale(0.95); box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
         
@@ -62,14 +63,6 @@
         
         .locked { opacity: 0.15; filter: grayscale(1) blur(1px); pointer-events: none; border-color: #222 !important; box-shadow: none !important; }
 
-        .disclaimer-container {
-            background: rgba(15, 15, 15, 0.5);
-            border-top: 1px solid #222;
-            padding: 30px 20px;
-            margin-top: 40px;
-            text-align: center;
-        }
-
         #patient-id-badge {
             background: rgba(37, 99, 235, 0.1);
             border: 1px solid rgba(37, 99, 235, 0.3);
@@ -86,7 +79,7 @@
         <img src="logo.png.jpg" class="w-32 h-32 rounded-full logo-main object-cover shadow-2xl">
         <div class="mt-4 text-center">
             <h1 class="text-3xl font-black tracking-tighter text-white uppercase italic font-family-Orbitron">MONTCODE™</h1>
-            <p id="tagline" class="text-[8px] font-bold text-blue-500 uppercase tracking-[0.25em] mt-2 opacity-90">
+            <p class="text-[8px] font-bold text-blue-500 uppercase tracking-[0.25em] mt-2 opacity-90">
                 Created by Providers • Tested by Patients • Trusted for Life
             </p>
             
@@ -98,7 +91,7 @@
     </div>
 
     <div id="enrollment-ui" class="mb-8 p-5 bg-zinc-900/80 border-2 border-dashed border-zinc-700 rounded-[28px] text-center">
-        <p id="status-label" class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">System Activation Required</p>
+        <p class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">System Activation Required</p>
         <button onclick="activateKit()" class="bg-blue-600 text-white text-[11px] font-black px-6 py-3 rounded-2xl uppercase tracking-tighter shadow-lg active:scale-95 transition">
             Scan Kit Barcode (102***)
         </button>
@@ -110,7 +103,7 @@
                 <span class="live-indicator"></span>
                 <span class="text-[10px] font-black uppercase text-blue-400 tracking-[0.2em]">Live Provider Link</span>
             </div>
-            <span id="msg-time" class="text-[9px] font-bold text-zinc-500 font-mono tracking-tighter">--:--</span>
+            <span id="msg-time" class="text-[9px] font-black text-zinc-400 font-mono tracking-tighter uppercase">--:--</span>
         </div>
         <p id="dr-text" class="text-sm font-bold italic text-zinc-200 leading-relaxed live-text-anim">
             Waiting for encrypted data packet...
@@ -118,36 +111,33 @@
     </div>
 
     <div id="tools-grid" class="grid grid-cols-2 gap-5">
-        <div onclick="location.href='montcode-sender/blood-pressure/index.html'" class="dash-card neon-border-blue locked">
+        <div onclick="location.href='blood-pressure/index.html'" class="dash-card neon-border-blue locked">
             <span class="text-4xl mb-2">❤️</span>
             <h2 class="btn-text">BP Master</h2>
         </div>
-        <div onclick="location.href='montcode-sender/glucose/index.html'" class="dash-card neon-border-green locked">
+        <div onclick="location.href='glucose/index.html'" class="dash-card neon-border-green locked">
             <span class="text-4xl mb-2">🩸</span>
             <h2 class="btn-text">Glucose Master</h2>
         </div>
-        <div onclick="location.href='montcode-sender/food/index.html'" class="dash-card neon-border-yellow col-span-2 locked">
+        <div onclick="location.href='food/index.html'" class="dash-card neon-border-yellow col-span-2 locked">
             <span class="text-4xl mb-2">🥗</span>
             <h2 class="btn-text">Food Scanner AI</h2>
             <p class="text-[7px] text-zinc-500 font-bold mt-1 uppercase">Local Analysis Mode</p>
         </div>
     </div>
 
-    <footer class="disclaimer-container">
-        <div class="max-w-xs mx-auto text-center">
-            <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-4">Wellness & Self-Monitoring App</p>
-            <p class="text-[10px] leading-relaxed text-zinc-500 font-medium italic">
-                *Based on info submitted by patient, not official records. If this is an emergency, call 911 immediately.*
-            </p>
-            <p class="text-[10px] text-white font-black uppercase mt-6 tracking-[0.25em] font-family-Orbitron">MONTCODE™</p>
-        </div>
+    <footer class="mt-12 mb-8 text-center px-6">
+        <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-4">Wellness & Self-Monitoring App</p>
+        <p class="text-[10px] leading-relaxed text-zinc-600 font-medium italic">
+            *Based on info submitted by patient, not official records. If this is an emergency, call 911 immediately.*
+        </p>
+        <p class="text-[10px] text-white/20 font-black uppercase mt-6 tracking-[0.25em] font-family-Orbitron">MONTCODE™</p>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyDVIQ4S-w4Ag40uYuArW3o7Hw2XQwoQV7U",
             databaseURL: "https://montcode-e02c7-default-rtdb.firebaseio.com",
@@ -157,20 +147,17 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // PWA SERVICE WORKER REGISTRATION
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(() => {});
-            });
-        }
-
         window.activateKit = function() {
             const code = prompt("ENTER 6-DIGIT KIT CODE:");
             if(code && code.startsWith("102") && code.length === 6) {
                 const expiry = Date.now() + (365 * 24 * 60 * 60 * 1000);
                 localStorage.setItem('montcode_auth', JSON.stringify({ active: true, expiry: expiry }));
-                const patientID = "MC-" + Math.floor(1000 + Math.random() * 9000);
-                localStorage.setItem('montcode_patient_id', patientID);
+                
+                if(!localStorage.getItem('montcode_patient_id')) {
+                    const patientID = "MC-" + Math.floor(1000 + Math.random() * 9000);
+                    localStorage.setItem('montcode_patient_id', patientID);
+                }
+                
                 alert("SYSTEM ACTIVATED: ALL TOOLS UNLOCKED");
                 location.reload();
             } else {
@@ -192,6 +179,7 @@
                     document.getElementById('display-mc-id').innerText = pID;
                 }
                 
+                // ESCUCHA DE MENSAJES CON DÍA Y HORA
                 const drRef = ref(db, 'mensaje_dr'); 
                 onValue(drRef, (snapshot) => {
                     const data = snapshot.val();
@@ -202,9 +190,11 @@
                         txt.innerText = data.texto;
                         txt.className = "text-sm font-black italic text-[#ccff00] live-text-anim";
                         
+                        // Formato: Mon 09:45 PM
                         const now = new Date();
-                        timeSpan.innerText = now.getHours().toString().padStart(2, '0') + ":" + 
-                                            now.getMinutes().toString().padStart(2, '0');
+                        const day = now.toLocaleDateString('en-US', { weekday: 'short' });
+                        const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                        timeSpan.innerText = `${day} ${time}`.toUpperCase();
                     }
                 });
             }
